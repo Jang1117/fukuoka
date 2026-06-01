@@ -697,7 +697,7 @@
 
         // 포커스 무브먼트 시스템
         function focusPlace(lat, lng, zoomLevel = 17) {
-            map.setView([lat, lng], zoomLevel, { animate: true, duration: 0.6 });
+            map.setView([lat, lng], zoomLevel, { animate: true, duration: 0.2 });
             setTimeout(function() {
                 Object.keys(layers).forEach(function(key) {
                     layers[key].eachLayer(function(layer) {
