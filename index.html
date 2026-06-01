@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>후쿠오카 4인 가족 힐링 가이드 (모바일 가로 균등 뷰)</title>
+    <title>후쿠오카 4인 가족 힐링 가이드 (반응형 마스터)</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
@@ -28,7 +28,6 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            /* 모바일 브라우저 주소창 대응 (svh 사용, 없을 시 vh) */
             height: 100vh;
             height: 100svh;
             display: flex;
@@ -36,7 +35,7 @@
             overflow: hidden;
         }
 
-        /* 모바일 상단 미니멀 헤더 */
+        /* 공통 헤더 */
         header {
             background: linear-gradient(135deg, #0f172a, #1a365d);
             color: white;
@@ -58,24 +57,53 @@
             margin-top: 1px;
         }
 
-        /* 메인 워크스페이스 레이아웃 (5:5 분할) */
+        /* 메인 워크스페이스 레이아웃 */
         .main-workspace {
             flex: 1;
             display: flex;
-            flex-direction: column;
             overflow: hidden;
         }
 
-        /* 1. 상단: 일정 구역 (정확히 50% 점유) */
+        /* -------------------------------------------------- */
+        /* 기본 설정: PC 버전 (좌우 4:6 분할) */
+        /* -------------------------------------------------- */
         .schedule-column {
-            flex: 50; 
+            flex: 0 0 40%;
             display: flex;
             flex-direction: column;
             background: #ffffff;
+            border-right: 2px solid var(--border-color);
             overflow: hidden;
-            border-bottom: 2px solid var(--border-color);
         }
 
+        .map-column {
+            flex: 1;
+            background: #cbd5e1;
+            position: relative;
+        }
+
+        /* -------------------------------------------------- */
+        /* 반응형 설정: 모바일 버전 (768px 이하, 상하 4:6 분할) */
+        /* -------------------------------------------------- */
+        @media (max-width: 768px) {
+            .main-workspace {
+                flex-direction: column;
+            }
+
+            .schedule-column {
+                flex: 0 0 40%; /* 모바일에서 상단 일정 영역 40%로 축소 */
+                width: 100%;
+                border-right: none;
+                border-bottom: 2px solid var(--border-color);
+            }
+
+            .map-column {
+                flex: 1; /* 모바일에서 하단 지도 영역 60%로 확대 */
+                width: 100%;
+            }
+        }
+
+        /* 일정 내부 레이아웃 컴포넌트 */
         .tabs-container {
             padding: 8px 14px;
             background: #ffffff;
@@ -112,7 +140,7 @@
             flex: 1;
             overflow-y: auto;
             padding: 12px;
-            -webkit-overflow-scrolling: touch; /* iOS 부드러운 스크롤 */
+            -webkit-overflow-scrolling: touch;
         }
 
         .day-content {
@@ -123,7 +151,6 @@
             display: block;
         }
 
-        /* 모바일 터치용 카드 디자인 */
         .timeline-card {
             background: #ffffff;
             border: 1px solid var(--border-color);
@@ -132,6 +159,12 @@
             margin-bottom: 10px;
             position: relative;
             box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .timeline-card:hover {
+            background: #f8fafc;
         }
 
         .timeline-card::before {
@@ -176,7 +209,7 @@
             line-height: 1.45;
         }
 
-        /* 맛집 피커 탭 UI */
+        /* 맛집 피커 내부 UI */
         .gastronomy-container {
             margin-top: 8px;
             border-top: 1px dashed var(--border-color);
@@ -199,6 +232,7 @@
             border-radius: 6px;
             color: #475569;
             text-align: center;
+            cursor: pointer;
         }
 
         .gastro-btn.active {
@@ -233,15 +267,7 @@
         .gastro-score { font-weight: 800; color: #e11d48; }
         .gastro-budget { font-weight: 800; color: #2563eb; }
 
-
-        /* 2. 하단: 고정식 지도 뷰 스페이스 (정확히 50% 점유) */
-        .map-column {
-            flex: 50; 
-            background: #cbd5e1;
-            position: relative;
-        }
-
-        /* 모바일 플로팅 레이어 필터 토글러 */
+        /* 지도 레이어 컨트롤러 */
         .map-layer-control {
             position: absolute;
             top: 8px;
@@ -275,6 +301,7 @@
             color: #cbd5e1;
             font-size: 0.68rem;
             font-weight: 600;
+            cursor: pointer;
         }
 
         .layer-toggle input {
@@ -295,9 +322,9 @@
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <h1>후쿠오카 가족 여행 가이드</h1>
-                <p>나카스 워싱턴 호텔 기준 동선지도</p>
+                <p>나카스 워싱턴 호텔 기준 반응형 종합 뷰</p>
             </div>
-            <div style="font-size: 0.68rem; color: #fcd34d; font-weight: bold; border: 1px solid rgba(255,255,255,0.2); padding: 4px 6px; border-radius: 4px;" onclick="focusPlace(33.5925, 130.4084, 17)">
+            <div style="font-size: 0.68rem; color: #fcd34d; font-weight: bold; border: 1px solid rgba(255,255,255,0.2); padding: 4px 6px; border-radius: 4px; cursor: pointer;" onclick="focusPlace(33.5925, 130.4084, 17)">
                 🏨 숙소 고정
             </div>
         </div>
@@ -579,14 +606,14 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // 모바일 터치 및 하단 프레임 레이아웃 초기화
+        // 지도 엔진 초기화 (나카스 중심 배치)
         var map = L.map('map', { zoomControl: false }).setView([33.5892, 130.4084], 14);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap'
         }).addTo(map);
 
-        // 마커 데이터베이스 (전체동선)
+        // 마커 풀 데이터베이스 복원
         const markerData = [
             { type: 'hotel', lat: 33.5925, lng: 130.4084, title: '하카타 나카스 워싱턴 호텔 플라자', desc: '가족 베이스캠프 숙소' },
             { type: 'sight', lat: 33.5916, lng: 130.4069, title: '구시다 신사 & 상점가', desc: '호텔 도보 3분 정취 코스' },
@@ -597,40 +624,40 @@
             { type: 'sight', lat: 33.5815, lng: 130.3958, title: '야쿠인 골목 카페거리', desc: '아기자기한 감성 소품숍 골목' },
             { type: 'sight', lat: 33.5855, lng: 130.4414, title: '후쿠오카 공항', desc: '지하철 직행 10분 컷 출국' },
             
-            // 1일차 식사
-            { type: 'food', lat: 33.5931, lng: 130.4045, title: '인바쇼 편백찜 (도보 4분)', desc: '1일차 저녁A (소고기 야채 찜)' },
-            { type: 'food', lat: 33.5920, lng: 130.4095, title: '나카스 미츠야시마 (도보 2분)', desc: '1일차 저녁B (개인 화로 와규 정식)' },
-            { type: 'food', lat: 33.5915, lng: 130.4080, title: '나카스 갓포 이시가와 (도보 3분)', desc: '1일차 저녁C (수제 일식 솥밥 코스)' },
-            { type: 'food', lat: 33.5935, lng: 130.4062, title: '토리마부시 본점 (도보 5분)', desc: '1일차 저녁D (정통 명품 닭고기 덮밥)' },
+            // 1일차 식사 저녁 옵션
+            { type: 'food', lat: 33.5931, lng: 130.4045, title: '인바쇼 편백찜', desc: '1일차 저녁A (소고기 야채 편백나무 찜)' },
+            { type: 'food', lat: 33.5920, lng: 130.4095, title: '나카스 미츠야시마', desc: '1일차 저녁B (개인 반상 화로 와규 구이)' },
+            { type: 'food', lat: 33.5915, lng: 130.4080, title: '나카스 갓포 이시가와', desc: '1일차 저녁C (수제 명란 일식 솥밥 코스)' },
+            { type: 'food', lat: 33.5935, lng: 130.4062, title: '토리마부시 본점', desc: '1일차 저녁D (정통 명품 닭고기 덮밥)' },
             
-            // 2일차 아침
-            { type: 'food', lat: 33.5905, lng: 130.4042, title: '원조 하카타 멘타이쥬 (도보 4분)', desc: '2일차 조식A (명품 명란덮밥 반상)' },
-            { type: 'food', lat: 33.5898, lng: 130.4005, title: '빵 스톡 하레노가든 (도보 4분)', desc: '2일차 조식B (강변 뷰 베이커리 카페)' },
-            { type: 'food', lat: 33.5922, lng: 130.4050, title: '코메다 커피 나카스점 (도보 2분)', desc: '2일차 조식C (무료 토스트 다방 조식)' },
-            { type: 'food', lat: 33.5930, lng: 130.4080, title: '우에시마 커피 나카스점 (도보 3분)', desc: '2일차 조식D (흑당커피 & 에그샌드 콤보)' },
+            // 2일차 아침 조식 옵션
+            { type: 'food', lat: 33.5905, lng: 130.4042, title: '원조 하카타 멘타이쥬', desc: '2일차 조식A (명품 특제 명란덮밥 반상)' },
+            { type: 'food', lat: 33.5898, lng: 130.4005, title: '빵 스톡 하레노가든', desc: '2일차 조식B (강변 명품 베이커리 카페)' },
+            { type: 'food', lat: 33.5922, lng: 130.4050, title: '코메다 커피 나카스점', desc: '2일차 조식C (일본 정통 나고야식 단팥 토스트)' },
+            { type: 'food', lat: 33.5930, lng: 130.4080, title: '우에시마 커피 나카스점', desc: '2일차 조식D (구리잔 흑당커피 & 베이컨 샌드)' },
 
-            // 2일차 점심
-            { type: 'food', lat: 33.5895, lng: 130.4190, title: '우나기 요리 우나기야 하카타', desc: '2일차 점심A (명품 장어 히츠마부시)' },
-            { type: 'food', lat: 33.5885, lng: 130.4180, title: '하카타 이소라기 카이센동', desc: '2일차 점심B (비주얼 최고 해산물 반상)' },
-            { type: 'food', lat: 33.5902, lng: 130.4220, title: '니혼바시 텐동 가네코야', desc: '2일차 점심C (장어 한 마리 명품 튀김덮밥)' },
-            { type: 'food', lat: 33.5890, lng: 130.4175, title: '한큐 쥬쥬 스키야키 타워점', desc: '2일차 점심D (고소한 달걀물 소고기 전골)' },
+            // 2일차 점심 식사 옵션
+            { type: 'food', lat: 33.5895, lng: 130.4190, title: '우나기야 하카타 스카이', desc: '2일차 점심A (명품 장어 히츠마부시)' },
+            { type: 'food', lat: 33.5885, lng: 130.4180, title: '하카타 이소라기 카이센동', desc: '2일차 점심B (신선도 극상 해산물 반상)' },
+            { type: 'food', lat: 33.5902, lng: 130.4220, title: '니혼바시 텐동 가네코야', desc: '2일차 점심C (장인 즉석 유기농 튀김덮밥)' },
+            { type: 'food', lat: 33.5890, lng: 130.4175, title: '한큐 쥬쥬 스키야키', desc: '2일차 점심D (관서식 소고기 야채 전골)' },
 
-            // 2일차 저녁
-            { type: 'food', lat: 33.5872, lng: 130.3920, title: '모츠나베 다이다이 본점', desc: '2일차 저녁A (냄새 제로 맑은 대창전골)' },
-            { type: 'food', lat: 33.5927, lng: 130.4079, title: '토리덴 하카타 본점', desc: '2일차 저녁B (뽀얀 콜라겐 닭백숙 미즈타키)' },
-            { type: 'food', lat: 33.5898, lng: 130.4201, title: '하카타 한큐 아사히 와규', desc: '2일차 저녁C (백화점 룸형 와규 샤부샤부)' },
-            { type: 'food', lat: 33.5910, lng: 130.4110, title: '갓포 카야 명품 솥밥', desc: '2일차 저녁D (정성 가득한 일식 수제 솥밥 코스)' },
+            // 2일차 저녁 전골 옵션
+            { type: 'food', lat: 33.5872, lng: 130.3920, title: '모츠나베 다이다이 본점', desc: '2일차 저녁A (맑은 미쉐린 빕구르망 대창전골)' },
+            { type: 'food', lat: 33.5927, lng: 130.4079, title: '토리덴 하카타 본점', desc: '2일차 저녁B (진한 콜라겐 닭백숙 미즈타키)' },
+            { type: 'food', lat: 33.5898, lng: 130.4201, title: '하카타 한큐 아사히 와규', desc: '2일차 저녁C (백화점 카이석 와규 샤부샤부)' },
+            { type: 'food', lat: 33.5910, lng: 130.4110, title: '갓포 카야 명품 솥밥', desc: '2일차 저녁D (정성 가득한 활어 일식 솥밥 코스)' },
 
-            // 3일차 아침
-            { type: 'food', lat: 33.5940, lng: 130.4020, title: '빌즈 후쿠오카 (bills) [도보 5분]', desc: '3일차 조식A (명품 수플레 팬케이크)' },
-            { type: 'food', lat: 33.5890, lng: 130.4215, title: '무츠카도 식빵 카페 하카타 [도보 5분]', desc: '3일차 조식B (프렌치토스트 & 과일 샌드)' },
-            { type: 'food', lat: 33.5880, lng: 130.3960, title: '더 시티 베이커리 텐진 [도보 5분]', desc: '3일차 조식C (클램 차우더 조개스프 & 크로와상)' },
-            { type: 'food', lat: 33.5912, lng: 130.4060, title: '우에시마 커피 나카스점 [도보 3분]', desc: '3일차 조식D (흑당 밀크커피 & 모닝 BLT)' },
+            // 3일차 아침 브런치 옵션
+            { type: 'food', lat: 33.5940, lng: 130.4020, title: '빌즈 후쿠오카 (bills)', desc: '3일차 조식A (오리지널 리코타 수플레 팬케이크)' },
+            { type: 'food', lat: 33.5890, lng: 130.4215, title: '무츠카도 식빵 카페 하카타', desc: '3일차 조식B (프렌치토스트 & 크림 과일 샌드)' },
+            { type: 'food', lat: 33.5880, lng: 130.3960, title: '더 시티 베이커리 텐진', desc: '3일차 조식C (뉴욕 감성 클램차우더 스프 & 크로와상)' },
+            { type: 'food', lat: 33.5912, lng: 130.4060, title: '우에시마 커피 나카스점', desc: '3일차 조식D (원조 흑당 밀크커피 & 모닝 BLT)' },
 
-            // 3일차 점심
-            { type: 'food', lat: 33.5893, lng: 130.4184, title: '카와미야 함바그 하카타역점', desc: '3일차 점심A (개인 돌판 와규 함바그 구이)' },
+            // 3일차 점심 마지막 특선 옵션
+            { type: 'food', lat: 33.5893, lng: 130.4184, title: '카와미야 함바그 하카타역점', desc: '3일차 점심A (개인 미니 돌판 와규 함바그 구이)' },
             { type: 'food', lat: 33.5872, lng: 130.4002, title: '돈카츠 아스카 텐진점', desc: '3일차 점심B (저온 공법 명품 안심 가츠 정식)' },
-            { type: 'food', lat: 33.5865, lng: 130.3990, title: '텐진 보바르 안심 스테이크', desc: '3일차 점심C (스테이크 슬라이스 덮밥)' },
+            { type: 'food', lat: 33.5865, lng: 130.3990, title: '텐진 보바르 안심 스테이크', desc: '3일차 점심C (스테이크 슬라이스 산더미 덮밥)' },
             { type: 'food', lat: 33.5885, lng: 130.4170, title: '하카타 토리쇼 오야코동', desc: '3일차 점심D (부드럽고 달콤한 토종닭 달걀덮밥)' }
         ];
 
@@ -642,7 +669,7 @@
             return 'red';
         }
 
-        // 마커 생성 및 레이어 할당
+        // 마커 레이어 생성 가동
         markerData.forEach(function(item) {
             var color = getMarkerColor(item.type);
             var customIcon = L.icon({
@@ -660,12 +687,12 @@
             layers[item.type].addLayer(marker);
         });
 
-        // 초기 지도 활성화
-        layers.hotel.addTo(map);
-        layers.sight.addTo(map);
-        layers.food.addTo(map);
+        // 레이어 맵 초기 활성화 바인딩
+        Object.keys(layers).forEach(function(key) {
+            layers[key].addTo(map);
+        });
 
-        // 터치 인터랙션 포커스 액추에이터
+        // 터치/클릭 인터랙션 무브 액추에이터
         function focusPlace(lat, lng, zoomLevel = 16) {
             map.setView([lat, lng], zoomLevel, { animate: true, duration: 0.6 });
             
@@ -680,13 +707,14 @@
             }, 600);
         }
 
+        // 체크박스 레이어 필터링 컨트롤러
         function toggleLayer(type) {
             var checkBox = document.getElementById('layer-' + type);
             if (checkBox.checked) { map.addLayer(layers[type]); } 
             else { map.removeLayer(layers[type]); }
         }
 
-        // 일자별 탭 전환 및 카메라 센터 피팅
+        // 일자별 메인 탭 트래커
         function switchDay(evt, dayId) {
             const contents = document.getElementsByClassName("day-content");
             for (let i = 0; i < contents.length; i++) contents[i].classList.remove("active");
@@ -697,12 +725,13 @@
             document.getElementById(dayId).classList.add("active");
             evt.currentTarget.classList.add("active");
 
+            // 일자 전환 시 주요 거점으로 자동 피팅
             if (dayId === 'day1') focusPlace(33.5925, 130.4084, 15);
             if (dayId === 'day2') focusPlace(33.5898, 130.4205, 15);
             if (dayId === 'day3') focusPlace(33.5815, 130.3958, 15);
         }
 
-        // 음식 옵션 세부 터치 트래커
+        // 음식 세부 피커 탭 컨트롤러
         function changeGastro(btn, paneId, lat, lng) {
             const container = btn.closest('.gastronomy-container');
             
