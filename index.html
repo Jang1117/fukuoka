@@ -98,6 +98,102 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--bg)
 .iw-desc{font-size:11px;color:#666;line-height:1.5;margin-bottom:6px}
 .iw-link{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:8px;padding:6px 10px;background:#4285F4;color:#fff;font-size:11px;font-weight:500;border-radius:6px;text-decoration:none;font-family:'Noto Sans KR',sans-serif;transition:background .15s}
 .iw-link:hover{background:#1a6eea}
+
+/* ═══════════════════════════════════
+   MOBILE LAYOUT (≤768px)
+   상단 30%: 일정 패널 (가로 스크롤 탭)
+   하단 70%: 지도
+═══════════════════════════════════ */
+@media (max-width:768px){
+
+  /* 전체 레이아웃: 세로 스택 */
+  .layout{flex-direction:column;height:100dvh;height:100vh}
+
+  /* ── 상단 패널 (30%) ── */
+  .lp{
+    width:100%;min-width:0;max-width:100%;
+    height:30dvh;height:30vh;
+    border-right:none;border-bottom:2px solid var(--border2);
+    flex-shrink:0;overflow:hidden;display:flex;flex-direction:column;
+  }
+
+  /* 헤더: 한 줄로 압축 */
+  .hdr{padding:8px 12px 6px;position:relative;top:auto;z-index:10}
+  .hdr h1{font-size:13px;display:inline}
+  .hdr p{display:inline;font-size:10px;margin-left:6px}
+  .hotel-tag{display:none}
+
+  /* 탭: 더 작게, sticky 해제 후 flow */
+  .tabs{padding:4px 8px 0;gap:3px;position:relative;top:auto;flex-shrink:0}
+  .tab{padding:5px 2px 6px;font-size:10px;border-radius:5px 5px 0 0}
+  .tab small{display:none}
+
+  /* 필터바: 가로 스크롤, 줄 안 바꿈 */
+  .fbar{
+    flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;
+    padding:5px 8px;gap:4px;
+    position:relative;top:auto;flex-shrink:0;
+    scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  }
+  .fbar::-webkit-scrollbar{display:none}
+  .fb{padding:3px 8px;font-size:10px;white-space:nowrap;flex-shrink:0}
+  .fb-dot{width:6px;height:6px}
+
+  /* 일정 콘텐츠: 남은 공간에서 스크롤 */
+  .day-panel{padding:6px 10px 20px;overflow-y:auto;flex:1;min-height:0}
+  .day-intro{font-size:10px;padding:6px 9px;margin-bottom:8px}
+  .legend{display:none}
+
+  /* 타임라인 */
+  .timeline::before{left:16px}
+  .spot{gap:7px;margin-bottom:5px}
+  .spot-l{width:32px}
+  .dot{width:9px;height:9px;margin-top:2px}
+  .time-l{font-size:8px}
+  .sc{padding:6px 8px;border-radius:7px}
+  .sc-name{font-size:11px}
+  .sc-desc{font-size:10px}
+  .badge{font-size:9px;padding:1px 5px}
+  .tip{font-size:9px;padding:3px 6px;margin-top:3px}
+  .map-btn{font-size:9px;padding:2px 6px}
+
+  /* 식당 선택 카드 */
+  .ms{margin-bottom:8px;border-radius:10px}
+  .ms-hdr{padding:6px 9px 5px}
+  .ms-icon{font-size:12px}
+  .ms-title{font-size:11px}
+  .ms-time{font-size:9px}
+  .fo-list{padding:4px 5px;gap:3px}
+  .fo{padding:5px 7px;border-radius:7px;gap:6px}
+  .fo-chk{width:13px;height:13px;font-size:8px}
+  .fo-name{font-size:10px}
+  .fo-desc{font-size:9px}
+  .fo-star{font-size:9px}
+  .fo-type{font-size:9px;padding:1px 4px}
+
+  /* 하단 요약바: 숨김 (공간 절약) */
+  .sumbar{display:none}
+
+  /* ── 하단 패널 (70%): 지도 ── */
+  .rp{
+    flex:1;height:auto;min-height:0;
+    position:relative;overflow:hidden;
+  }
+
+  /* 모바일 InfoWindow: 더 작게 */
+  .gm-style .gm-style-iw-c{max-width:200px!important}
+  .iw-wrap{padding:8px 10px 8px}
+  .iw-name{font-size:11px}
+  .iw-desc{font-size:10px}
+  .iw-link{font-size:10px;padding:5px 8px}
+}
+
+/* 아주 작은 화면 (≤480px) */
+@media (max-width:480px){
+  .lp{height:32dvh;height:32vh}
+  .hdr h1{font-size:12px}
+  .fo-desc{display:none}
+}
 </style>
 </head>
 <body>
@@ -375,9 +471,10 @@ function fitAll(){
     if(m.getMap()){bounds.extend(m.getPosition());hasVisible=true;}
   });
   if(hasVisible){
-    map.fitBounds(bounds,{top:40,right:40,bottom:40,left:40});
-    // prevent over-zoom on sparse data
-    const listener=google.maps.event.addListenerOnce(map,'idle',()=>{
+    const isMobile=window.innerWidth<=768;
+    const pad=isMobile?30:40;
+    map.fitBounds(bounds,{top:pad,right:pad,bottom:pad,left:pad});
+    google.maps.event.addListenerOnce(map,'idle',()=>{
       if(map.getZoom()>15)map.setZoom(15);
     });
   }
