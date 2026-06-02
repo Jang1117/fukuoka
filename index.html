@@ -91,9 +91,10 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--bg)
 /* InfoWindow override — remove Google's top padding */
 .gm-style .gm-style-iw-c{padding:0!important;border-radius:10px!important;box-shadow:0 4px 18px rgba(0,0,0,.18)!important;max-width:240px!important;overflow:hidden!important}
 .gm-style .gm-style-iw-d{overflow:hidden!important;padding:0!important;max-height:none!important}
-.gm-style .gm-style-iw-chr{position:absolute;top:4px;right:4px;height:auto!important;overflow:visible!important}
-.gm-style .gm-style-iw-chr button{width:22px!important;height:22px!important;opacity:.5!important}
-.iw-wrap{padding:10px 13px 10px;font-family:'Noto Sans KR',sans-serif}
+.gm-style .gm-style-iw-chr{position:absolute!important;top:6px!important;right:6px!important;height:auto!important;overflow:visible!important;z-index:10!important}
+.gm-style .gm-style-iw-chr button{width:24px!important;height:24px!important;opacity:.7!important;background:rgba(255,255,255,.9)!important;border-radius:50%!important}
+.gm-style .gm-style-iw-chr button img{width:12px!important;height:12px!important}
+.iw-wrap{padding:10px 28px 10px 13px;font-family:'Noto Sans KR',sans-serif}
 .iw-name{font-size:12px;font-weight:600;color:#111;line-height:1.4;margin-bottom:3px}
 .iw-desc{font-size:11px;color:#666;line-height:1.5;margin-bottom:6px}
 .iw-link{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:8px;padding:6px 10px;background:#4285F4;color:#fff;font-size:11px;font-weight:500;border-radius:6px;text-decoration:none;font-family:'Noto Sans KR',sans-serif;transition:background .15s}
@@ -112,7 +113,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--bg)
   /* ── 상단 패널 (30%) ── */
   .lp{
     width:100%;min-width:0;max-width:100%;
-    height: 40dvh; height: 40vh;
+    height:30dvh;height:30vh;
     border-right:none;border-bottom:2px solid var(--border2);
     flex-shrink:0;overflow:hidden;display:flex;flex-direction:column;
   }
@@ -190,7 +191,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--bg)
 
 /* 아주 작은 화면 (≤480px) */
 @media (max-width:480px){
-  .lp{height:42dvh;height:42vh}
+  .lp{height:32dvh;height:32vh}
   .hdr h1{font-size:12px}
   .fo-desc{display:none}
 }
@@ -371,6 +372,14 @@ const PLACES={
 /* group visibility — all ON */
 const gv={stay:true,airport:true,sight:true,shop:true,night:true,food:true};
 
+// 날짜별 식당 그룹 매핑 (fo-list id → 해당 날짜)
+const dayFoodGroups={
+  0:['d1-din'],
+  1:['d2-brk','d2-lun','d2-din'],
+  2:['d3-brk','d3-lun'],
+};
+let activeDay=0;
+
 /* food selections — defaults: first item in each meal group */
 const sel={shinshin:true,itookashi:true,gyukatsu_parco:true,oyama:true,shinshin_kitte:true};
 
@@ -420,6 +429,18 @@ function initMap(){
 function isVis(key){
   const {group}=markers[key];
   if(!gv[group])return false;
+  if(group==='food'){
+    // 현재 날짜의 fo-list 중 체크된 항목만 표시
+    const groups=dayFoodGroups[activeDay]||[];
+    for(const gid of groups){
+      const list=document.getElementById(gid);
+      if(!list)continue;
+      const els=[...list.querySelectorAll('.fo')];
+      const found=els.find(el=>el.dataset.place===key);
+      if(found) return found.classList.contains('sel');
+    }
+    return false; // 현재 날짜에 없는 식당은 숨김
+  }
   return true;
 }
 
@@ -438,8 +459,8 @@ function refreshMarkers(){
 function focusPlace(key){
   if(!markers[key])return;
   const {m,iw}=markers[key];
-  m.setMap(map);
-  // 현재 줌이 15 미만이면 15로, 그 이상은 유지
+  // isVis 체크: 그룹 필터나 날짜 조건으로 숨겨진 마커는 강제 표시하지 않음
+  if(!m.getMap())return;
   if(map.getZoom()<15)map.setZoom(15);
   map.panTo(m.getPosition());
   if(openIW)openIW.close();
@@ -455,13 +476,19 @@ function toggleGroup(group,btn){
 
 function toggleFood(el,gid){
   const key=el.dataset.place;
-  // 토글: 선택/해제
   const wasSelected=el.classList.contains('sel');
   el.classList.toggle('sel');
   sel[key]=!wasSelected;
-  refreshMarkers();
-  // 클릭한 가게를 지도에서 바로 포커스 (마커 클릭과 동일하게)
-  focusPlace(key);
+  refreshMarkers(); // 먼저 지도 상태 갱신
+  if(!wasSelected){
+    // 새로 선택: 해당 마커 포커스 (refreshMarkers 이후에 호출)
+    focusPlace(key);
+  } else {
+    // 해제: 열려있는 팝업이 이 마커 것이면 닫기
+    if(openIW&&markers[key]&&markers[key].iw===openIW){
+      openIW.close();openIW=null;
+    }
+  }
 }
 
 function fitAll(){
@@ -483,6 +510,8 @@ function fitAll(){
 function switchDay(idx){
   document.querySelectorAll('.day-panel').forEach((el,i)=>el.classList.toggle('active',i===idx));
   document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',i===idx));
+  activeDay=idx;
+  refreshMarkers();
   setTimeout(fitAll,50);
 }
 window.initMap=initMap;
