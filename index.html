@@ -1,744 +1,395 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>후쿠오카 4인 가족 여행 완벽 마스터 가이드</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <style>
-        :root {
-            --primary-color: #1a365d;
-            --secondary-color: #0d9488;
-            --accent-color: #f43f5e;
-            --hotel-color: #b45309;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-color: #0f172a;
-            --border-color: #e2e8f0;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>후쿠오카 여행 동선</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --coral:#D85A30;--coral-l:#FAECE7;--coral-d:#993C1D;
+  --teal:#1D9E75;--teal-l:#E1F5EE;--teal-d:#0F6E56;
+  --purple:#7F77DD;--purple-l:#EEEDFE;--purple-d:#534AB7;
+  --amber:#BA7517;--amber-l:#FAEEDA;--amber-d:#633806;
+  --pink:#D4537E;--pink-l:#FBEAF0;--pink-d:#993556;
+  --gray:#888780;--gray-l:#F1EFE8;--gray-d:#444441;
+  --text:#1a1a1a;--muted:#6b6b6b;--hint:#a0a0a0;
+  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.18);
+  --bg:#f7f6f3;--card:#fff;--r:10px;--rl:14px;
+}
+html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text)}
+.layout{display:flex;height:100vh;overflow:hidden}
+.lp{width:470px;min-width:420px;height:100vh;overflow-y:auto;background:var(--bg);border-right:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column}
+.lp::-webkit-scrollbar{width:4px}.lp::-webkit-scrollbar-thumb{background:#ccc;border-radius:2px}
+.hdr{padding:14px 16px 10px;border-bottom:1px solid var(--border);background:var(--card);position:sticky;top:0;z-index:10}
+.hdr h1{font-family:'Noto Serif JP',serif;font-size:16px;font-weight:600;letter-spacing:-.3px}
+.hdr p{font-size:11px;color:var(--muted);margin-top:2px}
+.hotel-tag{display:inline-flex;align-items:center;gap:4px;background:var(--purple-l);color:var(--purple-d);border-radius:20px;padding:3px 9px;font-size:11px;margin-top:4px}
+.tabs{display:flex;padding:8px 12px 0;gap:5px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:70px;z-index:9}
+.tab{flex:1;padding:7px 4px 8px;font-size:11px;color:var(--muted);background:var(--gray-l);border:none;cursor:pointer;border-radius:7px 7px 0 0;transition:all .15s;font-family:inherit;line-height:1.4}
+.tab.active{background:#3C3489;color:#EEEDFE;font-weight:500}
+.tab:hover:not(.active){background:#ddd}
+/* FILTER BAR */
+.fbar{display:flex;gap:5px;flex-wrap:wrap;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:116px;z-index:8}
+.fb{display:flex;align-items:center;gap:4px;padding:3px 9px;border:1.5px solid var(--border2);border-radius:20px;font-size:11px;cursor:pointer;background:var(--card);color:var(--muted);font-family:inherit;transition:all .13s;white-space:nowrap;opacity:.5}
+.fb.on{opacity:1;font-weight:500}
+.fb.on.g-stay{color:var(--purple-d);background:var(--purple-l);border-color:var(--purple)}
+.fb.on.g-airport{color:var(--gray-d);background:var(--gray-l);border-color:var(--gray)}
+.fb.on.g-sight{color:var(--teal-d);background:var(--teal-l);border-color:var(--teal)}
+.fb.on.g-shop{color:var(--purple-d);background:var(--purple-l);border-color:var(--purple)}
+.fb.on.g-night{color:var(--pink-d);background:var(--pink-l);border-color:var(--pink)}
+.fb.on.g-food{color:var(--coral-d);background:var(--coral-l);border-color:var(--coral)}
+.fb.on.g-transit{color:var(--gray-d);background:var(--gray-l);border-color:var(--gray)}
+.fb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.day-panel{display:none;padding:12px 14px 80px}
+.day-panel.active{display:block}
+.day-intro{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:8px 11px;font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:11px}
+.legend{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:11px}
+.leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)}
+.leg-dot{width:7px;height:7px;border-radius:50%}
+.timeline{position:relative}
+.timeline::before{content:'';position:absolute;left:20px;top:10px;bottom:10px;width:1px;background:var(--border)}
+.spot{display:flex;gap:10px;margin-bottom:6px;position:relative}
+.spot-l{width:40px;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
+.dot{width:11px;height:11px;border-radius:50%;border:2.5px solid;flex-shrink:0;margin-top:3px;position:relative;z-index:1;background:var(--card)}
+.dot-meal{border-color:var(--coral)}.dot-sight{border-color:var(--teal)}
+.dot-shop{border-color:var(--purple)}.dot-transit{border-color:var(--gray)}.dot-night{border-color:var(--pink)}
+.time-l{font-size:9px;color:var(--hint);margin-top:2px;white-space:nowrap}
+.sc{flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;cursor:pointer;transition:border-color .15s}
+.sc:hover{border-color:var(--border2)}
+.sc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:2px}
+.sc-name{font-size:12px;font-weight:500}
+.badge{font-size:10px;padding:1px 6px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.bm{background:var(--coral-l);color:var(--coral-d)}.bs{background:var(--teal-l);color:var(--teal-d)}
+.bsh{background:var(--purple-l);color:var(--purple-d)}.bt{background:var(--gray-l);color:var(--gray-d)}.bn{background:var(--pink-l);color:var(--pink-d)}
+.sc-desc{font-size:11px;color:var(--muted);line-height:1.5}
+.tip{background:var(--amber-l);border-radius:6px;padding:4px 7px;font-size:10px;color:var(--amber-d);margin-top:4px;line-height:1.5}
+.map-btn{display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--purple-d);background:var(--purple-l);border:none;border-radius:20px;padding:2px 7px;cursor:pointer;margin-top:3px;font-family:inherit}
+.map-btn:hover{background:#dddaf8}
+/* MEAL SLOT */
+.ms{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:11px}
+.ms-hdr{display:flex;align-items:center;gap:6px;padding:8px 11px 7px;border-bottom:1px solid var(--border)}
+.ms-icon{font-size:14px}.ms-title{font-size:12px;font-weight:500}.ms-time{font-size:10px;color:var(--hint);margin-left:auto}
+.ms-note{font-size:10px;color:var(--hint);padding:5px 11px 5px}.ms-note span{color:var(--amber);font-weight:500}
+.fo-list{padding:5px 6px;display:flex;flex-direction:column;gap:4px}
+.fo{display:flex;align-items:center;gap:7px;padding:6px 8px;border:1.5px solid var(--border);border-radius:var(--r);cursor:pointer;transition:all .12s}
+.fo:hover{border-color:var(--border2);background:#fafafa}
+.fo.sel{border-color:var(--teal);background:var(--teal-l)}
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Malgun Gothic", sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
+.fo-chk{width:15px;height:15px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;color:transparent;transition:all .12s}
+.fo.sel .fo-chk{background:var(--teal);border-color:var(--teal);color:#fff}
+.fo-info{flex:1;min-width:0}
+.fo-name{font-size:11px;font-weight:500}.fo-desc{font-size:10px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fo-meta{display:flex;gap:4px;align-items:center;flex-shrink:0}
+.fo-star{font-size:10px;color:var(--amber)}.fo-type{font-size:10px;color:var(--hint);background:var(--gray-l);padding:1px 5px;border-radius:10px}
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            height: 100vh;
-            height: 100svh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        /* 미니멀 상단 대시보드 헤더 */
-        header {
-            background: linear-gradient(135deg, #0f172a, #1a365d);
-            color: white;
-            padding: 12px 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            z-index: 2000;
-            flex-shrink: 0;
-        }
-
-        header h1 {
-            font-size: 1.1rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-        }
-
-        header p {
-            font-size: 0.75rem;
-            opacity: 0.8;
-            margin-top: 2px;
-        }
-
-        /* 메인 레이아웃 분할 프레임 엔진 */
-        .main-workspace {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
-        }
-
-        /* 기본 상태: PC 와이드 레이아웃 (일정 25% : 지도 75%) */
-        .schedule-column {
-            flex: 0 0 25%;
-            display: flex;
-            flex-direction: column;
-            background: #ffffff;
-            border-right: 2px solid var(--border-color);
-            overflow: hidden;
-        }
-
-        .map-column {
-            flex: 1;
-            background: #cbd5e1;
-            position: relative;
-        }
-
-        /* 반응형 상태: 모바일 레이아웃 (768px 이하, 상하 4:6 균등 뷰) */
-        @media (max-width: 768px) {
-            .main-workspace {
-                flex-direction: column;
-            }
-
-            .schedule-column {
-                flex: 0 0 40%;
-                width: 100%;
-                border-right: none;
-                border-bottom: 2px solid var(--border-color);
-            }
-
-            .map-column {
-                flex: 1;
-                width: 100%;
-            }
-        }
-
-        /* 대시보드 탭 컨트롤 스페이스 */
-        .tabs-container {
-            padding: 8px 12px;
-            background: #ffffff;
-            border-bottom: 1px solid var(--border-color);
-            flex-shrink: 0;
-        }
-
-        .tabs {
-            display: flex;
-            background: #f1f5f9;
-            border-radius: 8px;
-            padding: 3px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            border: none;
-            background: none;
-            padding: 8px 0;
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: #64748b;
-            cursor: pointer;
-            border-radius: 6px;
-            text-align: center;
-            transition: all 0.2s;
-        }
-
-        .tab-btn.active {
-            background-color: var(--primary-color);
-            color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        /* 타임라인 카드 설계 스택 */
-        .timeline-scroll {
-            flex: 1;
-            overflow-y: auto;
-            padding: 12px;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .day-content {
-            display: none;
-        }
-
-        .day-content.active {
-            display: block;
-        }
-
-        .timeline-card {
-            background: #ffffff;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 12px;
-            position: relative;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-            cursor: pointer;
-            transition: background 0.15s, border-color 0.15s;
-        }
-
-        .timeline-card:hover {
-            background: #f8fafc;
-            border-color: #cbd5e1;
-        }
-
-        .timeline-card::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 5px;
-            border-top-left-radius: 12px;
-            border-bottom-left-radius: 12px;
-            background-color: var(--secondary-color);
-        }
-
-        .timeline-card.hotel-type::before { background-color: var(--hotel-color); }
-        .timeline-card.meal-type::before { background-color: var(--accent-color); }
-
-        .time-badge {
-            font-size: 0.7rem;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 12px;
-            background: #f1f5f9;
-            color: #475569;
-            display: inline-block;
-            margin-bottom: 5px;
-        }
-
-        .meal-type .time-badge { background: #fff1f2; color: var(--accent-color); }
-        .hotel-type .time-badge { background: #fef3c7; color: var(--hotel-color); }
-
-        .card-title {
-            font-size: 0.92rem;
-            font-weight: 800;
-            color: #0f172a;
-            margin-bottom: 4px;
-        }
-
-        .card-desc {
-            font-size: 0.78rem;
-            color: #475569;
-            line-height: 1.5;
-            margin-bottom: 6px;
-        }
-
-        /* 구글 아웃링크용 독립 리뷰 서치 액션 인프라 버튼 */
-        .gmap-review-btn {
-            display: inline-flex;
-            align-items: center;
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.68rem;
-            font-weight: bold;
-            color: #1a365d;
-            text-decoration: none;
-            transition: background 0.15s;
-            margin-top: 4px;
-        }
-
-        .gmap-review-btn:hover {
-            background: #f1f5f9;
-            border-color: #94a3b8;
-        }
-
-        .gmap-review-btn::before {
-            content: '🗺️ ';
-            margin-right: 2px;
-        }
-
-        /* 맛집 선택용 서브 탭 시스템 인프라 */
-        .gastronomy-container {
-            margin-top: 10px;
-            border-top: 1px dashed var(--border-color);
-            padding-top: 10px;
-        }
-
-        .gastro-tabs {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 4px;
-            margin-bottom: 6px;
-        }
-
-        .gastro-btn {
-            border: 1px solid #cbd5e1;
-            background: #ffffff;
-            padding: 6px 0;
-            font-size: 0.7rem;
-            font-weight: 700;
-            border-radius: 6px;
-            color: #475569;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-
-        .gastro-btn:hover { background: #f8fafc; }
-        .gastro-btn.active { background: var(--accent-color); color: white; border-color: var(--accent-color); }
-
-        .gastro-pane {
-            display: none;
-            background: #fff1f2;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 0.78rem;
-            border: 1px solid #ffe4e6;
-            line-height: 1.45;
-            animation: paneFadeIn 0.2s ease-out;
-        }
-
-        .gastro-pane.active { display: block; }
-
-        .pane-bottom-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 6px;
-            padding-top: 6px;
-            border-top: 1px solid #fecdd3;
-        }
-
-        .gastro-meta-info { display: flex; flex-direction: column; gap: 1px; font-size: 0.68rem; font-weight: bold; }
-        .gastro-score { color: #e11d48; }
-        .gastro-budget { color: #2563eb; }
-
-        /* 지도용 종합 오버레이 레이어 스위치 콘솔 */
-        .map-layer-control {
-            position: absolute; top: 10px; right: 10px; z-index: 1000;
-            background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(4px);
-            padding: 8px 10px; border-radius: 8px; display: flex; flex-direction: column; gap: 4px; width: 140px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-
-        .layer-title {
-            color: white; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.3px;
-            border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 3px; margin-bottom: 2px;
-        }
-
-        .layer-toggle { display: flex; align-items: center; justify-content: space-between; color: #cbd5e1; font-size: 0.72rem; font-weight: bold; cursor: pointer; padding: 2px 0; }
-        .layer-toggle input { width: 13px; height: 13px; accent-color: var(--secondary-color); cursor: pointer; }
-        .map-wrapper { width: 100%; height: 100%; }
-
-        @keyframes paneFadeIn {
-            from { opacity: 0; transform: translateY(2px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
+.sumbar{padding:6px 14px;background:var(--card);border-top:1px solid var(--border);position:sticky;bottom:0;font-size:10px;color:var(--muted);display:flex;gap:10px;z-index:20}
+.sumbar strong{color:var(--text)}
+.rp{flex:1;height:100vh;position:relative;overflow:hidden}
+#map{width:100%;height:100%}
+/* InfoWindow override — remove Google's top padding */
+.gm-style .gm-style-iw-c{padding:0!important;border-radius:10px!important;box-shadow:0 4px 18px rgba(0,0,0,.18)!important;max-width:240px!important;overflow:hidden!important}
+.gm-style .gm-style-iw-d{overflow:hidden!important;padding:0!important;max-height:none!important}
+.gm-style .gm-style-iw-chr{position:absolute;top:4px;right:4px;height:auto!important;overflow:visible!important}
+.gm-style .gm-style-iw-chr button{width:22px!important;height:22px!important;opacity:.5!important}
+.iw-wrap{padding:10px 13px 10px;font-family:'Noto Sans KR',sans-serif}
+.iw-name{font-size:12px;font-weight:600;color:#111;line-height:1.4;margin-bottom:3px}
+.iw-desc{font-size:11px;color:#666;line-height:1.5;margin-bottom:6px}
+.iw-link{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:8px;padding:6px 10px;background:#4285F4;color:#fff;font-size:11px;font-weight:500;border-radius:6px;text-decoration:none;font-family:'Noto Sans KR',sans-serif;transition:background .15s}
+.iw-link:hover{background:#1a6eea}
+</style>
 </head>
 <body>
+<div class="layout">
+<div class="lp" id="lp">
+  <div class="hdr">
+    <h1>&#127479;&#127477; 후쿠오카 여행 동선</h1>
+    <p>6월 23일(월) ~ 6월 25일(수) · 2박 3일</p>
+    <div class="hotel-tag">&#127968; 하카타 나카스 워싱턴 호텔</div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchDay(0)">1일차<br><small>6/23 월</small></button>
+    <button class="tab" onclick="switchDay(1)">2일차<br><small>6/24 화</small></button>
+    <button class="tab" onclick="switchDay(2)">3일차<br><small>6/25 수</small></button>
+  </div>
+  <div class="fbar">
+    <button class="fb g-stay on" onclick="toggleGroup('stay',this)"><span class="fb-dot" style="background:var(--purple)"></span>숙소</button>
+    <button class="fb g-airport on" onclick="toggleGroup('airport',this)"><span class="fb-dot" style="background:var(--gray)"></span>공항</button>
+    <button class="fb g-sight on" onclick="toggleGroup('sight',this)"><span class="fb-dot" style="background:var(--teal)"></span>관광지</button>
+    <button class="fb g-shop on" onclick="toggleGroup('shop',this)"><span class="fb-dot" style="background:var(--purple)"></span>쇼핑</button>
+    <button class="fb g-night on" onclick="toggleGroup('night',this)"><span class="fb-dot" style="background:var(--pink)"></span>야타이</button>
+    <button class="fb g-food on" onclick="toggleGroup('food',this)"><span class="fb-dot" style="background:var(--coral)"></span>식당</button>
+  </div>
 
-    <header>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1>후쿠오카 4인 여성 가족 힐링 투어 마스터 대시보드</h1>
-                <p>6월 23일 ~ 6월 25일 | 구글 지도 정밀 실좌표 동기화 최종 승인본</p>
-            </div>
-            <div style="font-size: 0.68rem; color: #fcd34d; font-weight: bold; border: 1px solid rgba(255,255,255,0.25); padding: 4px 8px; border-radius: 6px; cursor: pointer; background: rgba(255,255,255,0.05);" onclick="focusPlace(33.592523, 130.408168, 17)">
-                🏨 숙소 위치 고정
-            </div>
-        </div>
-    </header>
-
-    <div class="main-workspace">
-        
-        <div class="schedule-column">
-            <div class="tabs-container">
-                <div class="tabs">
-                    <button class="tab-btn active" onclick="switchDay(event, 'day1')">1일차</button>
-                    <button class="tab-btn" onclick="switchDay(event, 'day2')">2일차</button>
-                    <button class="tab-btn" onclick="switchDay(event, 'day3')">3일차</button>
-                </div>
-            </div>
-
-            <div class="timeline-scroll">
-                
-                <div id="day1" class="day-content active">
-                    <div class="timeline-card hotel-type" onclick="focusPlace(33.592523, 130.408168, 17)">
-                        <span class="time-badge">13:30 ~ 14:30</span>
-                        <div class="card-title">호텔 체크인 및 베이스캠프 정비</div>
-                        <div class="card-desc">하카타 나카스 워싱턴 호텔 플라자에 캐리어를 보관합니다. 캐널시티와 바로 붙어 있어 향후 쇼핑 중간 휴식 거점으로 완벽하게 기능합니다.</div>
-                        <a href="https://maps.google.com/?q=Hakata+Nakasu+Washington+Hotel+Plaza" target="_blank" class="gmap-review-btn" onclick="event.stopPropagation();">구글맵 연결</a>
-                    </div>
-
-                    <div class="timeline-card" onclick="focusPlace(33.593006, 130.410505, 17)">
-                        <span class="time-badge">14:45 ~ 15:40</span>
-                        <div class="card-title">구시다 신사 산책</div>
-                        <div class="card-desc">호텔 도보 3분 거리. 후쿠오카 고유의 역사적 정취를 감상하고 카와바타 상점가 아케이드로 진입합니다.</div>
-                        <a href="https://maps.google.com/?q=Kushida+Shrine+Fukuoka" target="_blank" class="gmap-review-btn" onclick="event.stopPropagation();">구글맵 연결</a>
-                    </div>
-
-                    <div class="timeline-card" onclick="focusPlace(33.592182, 130.402634, 17)">
-                        <span class="time-badge">16:00 ~ 17:15</span>
-                        <div class="card-title">아크로스 후쿠오카 스텝 가든</div>
-                        <div class="card-desc">텐진 중앙공원 내륙 대지 안착 완료. 도심 속 거대한 인공 산 녹색 정원 계단에서 인생 단체 샷을 남겨보세요.</div>
-                        <a href="https://maps.google.com/?q=Acros+Fukuoka" target="_blank" class="gmap-review-btn" onclick="event.stopPropagation();">구글맵 연결</a>
-                    </div>
-
-                    <div class="timeline-card" onclick="focusPlace(33.589412, 130.398687, 16)">
-                        <span class="time-badge">17:30 ~ 19:15</span>
-                        <div class="card-title">텐진 지하상가 & 백화점 쇼핑</div>
-                        <div class="card-desc">시원한 냉방이 보장되는 트렌디 패션 쇼핑 지하 통로와 백화점을 둘러봅니다.</div>
-                        <a href="https://maps.google.com/?q=Tenjin+Underground+Shopping+Mall" target="_blank" class="gmap-review-btn" onclick="event.stopPropagation();">구글맵 연결</a>
-                    </div>
-
-                    <div class="timeline-card meal-type">
-                        <span class="time-badge">19:30 ~ 21:00 (저녁 식사)</span>
-                        <div class="card-title">1일차 저녁 맛집 피커 (나카스 구역)</div>
-                        <div class="gastronomy-container">
-                            <div class="gastro-tabs">
-                                <button class="gastro-btn active" onclick="changeGastro(this, 'd1m1', 33.593457, 130.404845)">옵션 A</button>
-                                <button class="gastro-btn" onclick="changeGastro(this, 'd1m2', 33.592654, 130.409321)">옵션 B</button>
-                                <button class="gastro-btn" onclick="changeGastro(this, 'd1m3', 33.590855, 130.407842)">옵션 C</button>
-                                <button class="gastro-btn" onclick="changeGastro(this, 'd1m4', 33.593889, 130.406082)">옵션 D</button>
-                            </div>
-                            <div id="d1m1" class="gastro-pane active">
-                                <strong>인바쇼 (소고기 야채 편백나무 찜)</strong><br>담백하게 편백 틀에 쪄내어 소스에 찍어 먹는 웰빙 와규 요리입니다.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.4</span><span class="gastro-budget">💰 ¥3,500~</span></div><a href="https://maps.google.com/?q=Inbasho+Fukuoka" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                            <div id="d1m2" class="gastro-pane">
-                                <strong>나카스 미츠야시마 야키니쿠 (보정)</strong><br>내륙 건물 안 안착 완료. 불 연기 없이 주방에서 주방장이 직접 구워 내오는 명품 정식입니다.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.5</span><span class="gastro-budget">💰 ¥4,000~</span></div><a href="https://maps.google.com/?q=Mitsuyashima+Nakasu" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                            <div id="d1m3" class="gastro-pane">
-                                <strong>나카스 갓포 이시가와 (일식 수제 솥밥)</strong><br>고슬고슬 지어 올린 명란 솥밥과 정갈한 가정식 찬거리, 숭늉 마무리.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.5</span><span class="gastro-budget">💰 ¥3,800~</span></div><a href="https://maps.google.com/?q=Kappo+Ishikawa+Fukuoka" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                            <div id="d1m4" class="gastro-pane">
-                                <strong>토리마부시 나카스 본점 (닭고기 덮밥)</strong><br>은은한 불향의 토종 닭고기 덮밥. 4단계 비법 조리식으로 명성이 높은 집입니다.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.3</span><span class="gastro-budget">💰 ¥2,200~</span></div><a href="https://maps.google.com/?q=Torimabushi+Fukuoka" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="day2" class="day-content">
-                    <div class="timeline-card meal-type">
-                        <span class="time-badge">08:30 ~ 09:30</span>
-                        <div class="card-title">2일차 아침 조식 선택 (호텔 근처 초밀착형)</div>
-                        <div class="gastronomy-container">
-                            <div class="gastro-tabs">
-                                <button class="gastro-btn active" onclick="changeGastro(this, 'd2b1', 33.590497, 130.404555)">옵션 A</button>
-                                <button class="gastro-btn" onclick="changeGastro(this, 'd2b2', 33.590321, 130.402754)">옵션 B</button>
-                                <button class="gastro-btn" onclick="changeGastro(this, 'd2b3', 33.594654, 130.406854)">옵션 C</button>
-                                <button class="gastro-btn" onclick="changeGastro(this, 'd2b4', 33.592221, 130.404554)">옵션 D</button>
-                            </div>
-                            <div id="d2b1" class="gastro-pane active">
-                                <strong>원조 하카타 멘타이쥬 (명란덮밥)</strong><br>흰쌀밥 위에 김과 특제 소스, 명품 통 명란을 통째로 얹어 주는 시그니처 덮밥.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.3</span><span class="gastro-budget">💰 ¥2,500~</span></div><a href="https://maps.google.com/?q=Ganso+Hakata+Mentaiju" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                            <div id="d2b2" class="gastro-pane">
-                                <strong>빵 스톡 하레노가든 나카스점</strong><br>수변 공원 내 전경이 보이는 테라스 석. 명란 바게트와 드립 커피 브런치.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.4</span><span class="gastro-budget">💰 ¥1,200~</span></div><a href="https://maps.google.com/?q=Pain+Stock+Nakasu" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                            <div id="d2b3" class="gastro-pane">
-                                <strong>코메다 커피 하카타 리바레인점</strong><br>내륙 복합 대형 몰 쇼핑센터 지점으로 완벽 보정 대체. 음료 주문 시 두툼한 토스트 무료 제공.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.3</span><span class="gastro-budget">💰 ¥700~</span></div><a href="https://maps.google.com/?q=Komeda+Coffee+Hakata+Riverain" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                            <div id="d2b4" class="gastro-pane">
-                                <strong>우에시마 커피 나카스점 (흑당커피)</strong><br>시원한 구리 잔에 담긴 달콤한 흑당 밀크커피와 노릇하게 구운 호밀 BLT 샌드위치.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.3</span><span class="gastro-budget">💰 ¥850~</span></div><a href="https://maps.google.com/?q=Ueshima+Coffee+Nakasu" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="timeline-card" onclick="focusPlace(33.589838, 130.420681, 16)">
-                        <span class="time-badge">10:00 ~ 12:00</span>
-                        <div class="card-title">하카타역 센트럴 타워 광장 & 한큐 백화점</div>
-                        <div class="card-desc">백화점 명품 자수 손수건 매장 및 큐슈 지역 한정 브랜드 과자 스토어 집중 쇼핑 코스.</div>
-                        <a href="https://maps.google.com/?q=Hakata+Station" target="_blank" class="gmap-review-btn" onclick="event.stopPropagation();">구글맵 연결</a>
-                    </div>
-
-                    <div class="timeline-card meal-type">
-                        <span class="time-badge">12:30 ~ 14:00</span>
-                        <div class="card-title">2일차 점심 선택 (하카타역 타워 최고급 식당가)</div>
-                        <div class="gastronomy-container">
-                            <div class="gastro-tabs">
-                                <button class="gastro-btn active" onclick="changeGastro(this, 'd2m1', 33.592631350199014, 130.40895505558362)">옵션 A</button> 
-                                <button class="gastro-btn" onclick="changeGastro(this, 'd2m2', 33.589854, 130.420121)">옵션 B</button>
-                                <button class="gastro-btn" onclick="changeGastro(this, 'd2m3', 33.589554, 130.421554)">옵션 C</button>
-                                <button class="gastro-btn" onclick="changeGastro(this, 'd2m4', 33.589321, 130.419554)">옵션 D</button>
-                            </div>
-                            <div id="d2m1" class="gastro-pane active">
-                                <strong>우나기 요리 우나기야 (장어 히츠마부시)</strong><br>달콤 짭조름한 양념 참숯 민물장어 덮밥. 3가지 비법 제조 방식으로 다양하게 즐기는 보양식 반상.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.5</span><span class="gastro-budget">💰 ¥3,800~</span></div><a href="https://maps.google.com/?q=Unagiya+Hakata" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                            <div id="d2m2" class="gastro-pane">
-                                <strong>하카타 이소라기 (고급 카이센동)</strong><br>아뮤플라자 9층. 비린 향을 완전히 제어하여 정갈하게 세팅되어 나오는 고급 해산물 덮밥 반상.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.3</span><span class="gastro-budget">💰 ¥2,400~</span></div><a href="https://maps.google.com/?q=Isoragi+Hakata" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                            <div id="d2m3" class="gastro-pane">
-                                <strong>니혼바시 텐동 가네코야 (명품 텐동)</strong><br>거대한 붕장어와 새우를 주문 즉시 튀겨내어 씨간장 타레 소스를 두른 장인 텐동 세트.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.4</span><span class="gastro-budget">💰 ¥1,800~</span></div><a href="https://maps.google.com/?q=Kanekoya+Hakata" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                            <div id="d2m4" class="gastro-pane">
-                                <strong>한큐 쥬쥬 스키야키 (와규 전골)</strong><br>백화점 10층 식당가. 마블링 한우 소고기와 유기농 채소를 조려 계란물 소스에 찍어 먹는 정식.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.3</span><span class="gastro-budget">💰 ¥3,000~</span></div><a href="https://maps.google.com/?q=Ningyocho+Imahan+Hakata+Hankyu" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="timeline-card" onclick="focusPlace(33.589718, 130.410712, 17)">
-                        <span class="time-badge">14:30 ~ 18:00</span>
-                        <div class="card-title">캐널시티 하카타 & 객실 중간 완전 휴식</div>
-                        <div class="card-desc">숙소와 통로 직결. 쇼핑 도중 지치면 방 객실 침대로 5분 만에 복귀하여 에어컨 바람 아래 체력 충전이 가능합니다.</div>
-                        <a href="https://maps.google.com/?q=Canal+City+Hakata" target="_blank" class="gmap-review-btn" onclick="event.stopPropagation();">구글맵 연결</a>
-                    </div>
-
-                    <div class="timeline-card meal-type">
-                        <span class="time-badge">18:30 ~ 20:30</span>
-                        <div class="card-title">2일차 저녁 선택 (담백 명품 미쉐린 전골 투어)</div>
-                        <div class="gastronomy-container">
-                            <div class="gastro-tabs">
-                                <button class="gastro-btn active" onclick="changeGastro(this, 'd2m5', 33.587845, 130.392554)">옵션 A</button>
-                                <button class="gastro-btn" onclick="changeGastro(this, 'd2m6', 33.592954, 130.407554)">옵션 B</button>
-                                <button class="gastro-btn" onclick="changeGastro(this, 'd2m7', 33.589454, 130.420121)">옵션 C</button>
-                                <button class="gastro-btn" onclick="changeGastro(this, 'd2m8', 33.591254, 130.410554)">옵션 D</button>
-                            </div>
-                            <div id="d2m5" class="gastro-pane active">
-                                <strong>모츠나베 다이다이 (맑은 청탕 대창전골)</strong><br>미쉐린 빕구르망. 투명하고 맑은 닭 육수 베이스를 가미하여 오일감과 돼지 잡내를 완벽히 도려낸 여성 선호도 일등 전골.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.4</span><span class="gastro-budget">💰 ¥3,500~</span></div><a href="https://maps.google.com/?q=Motsunabe+Daidaifukuoka" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                            <div id="d2m6" class="gastro-pane">
-                                <strong>토리덴 하카타 본점 (고급 미즈타키 전골)</strong><br>뽀얗고 진한 콜라겐 스프에 부드러운 토종 닭순살 고기와 채소를 데쳐 장인의 유자 폰즈 소스에 찍어 먹는 코스.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.3</span><span class="gastro-budget">💰 ¥5,000~</span></div><a href="https://maps.google.com/?q=Toriden+Hakata" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                            <div id="d2m7" class="gastro-pane">
-                                <strong>하카타 한큐 아사히 와규 (와규 샤부샤부)</strong><br>백화점 최상층 프라이빗 독립 룸 구역. 소고기를 저며 채소와 즐기는 럭셔리 샤부 매장.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.4</span><span class="gastro-budget">💰 ¥5,500~</span></div><a href="https://maps.google.com/?q=Asahi+Beef+Hakata+Hankyu" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                            <div id="d2m8" class="gastro-pane">
-                                <strong>갓포 카야 (일식 특선 솥밥 코스)</strong><br>주문과 동시 즉석 직조하는 도미 생선, 활명란, 와규 솥밥. 한식 친화형 반찬 구성으로 숭늉 보장.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.5</span><span class="gastro-budget">💰 ¥4,000~</span></div><a href="https://maps.google.com/?q=Kappo+Kaya+Fukuoka" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="day3" class="day-content">
-                    <div class="timeline-card meal-type">
-                        <span class="time-badge">08:30 ~ 09:30</span>
-                        <div class="card-title">3일차 아침 조식 선택 (나카스강 수변 가든 테라스 뷰)</div>
-                        <div class="gastronomy-container">
-                            <div class="gastro-tabs">
-                                <button class="gastro-btn active" onclick="changeGastro(this, 'd3b1', 33.590854, 130.402554)">옵션 A</button>
-                                <button class="gastro-btn" onclick="changeGastro(this, 'd3b2', 33.589854, 130.420854)">옵션 B</button>
-                                <button class="gastro-btn" onclick="changeGastro(this, 'd3b3', 33.589121, 130.399554)">옵션 C</button>
-                                <button class="gastro-btn" onclick="changeGastro(this, 'd3b4', 33.592121, 130.404554)">옵션 D</button>
-                            </div>
-                            <div id="d3b1" class="gastro-pane active">
-                                <strong>빌즈 후쿠오카 (bills)</strong><br>수변공원 대지 내부 빌딩 `SHIP'S GARDEN 1층` 안착 검증 완료. 세계 최고의 리코타 수플레 팬케이크 브런치.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.3</span><span class="gastro-budget">💰 ¥2,300~</span></div><a href="https://maps.google.com/?q=bills+Fukuoka" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                            <div id="d3b2" class="gastro-pane">
-                                <strong>무츠카도 식빵 카페 (아뮤플라자 하카타점)</strong><br>하카타역 직결 몰 5층. 두툼하고 폭신한 정통 프렌치토스트 아침 세트와 생과일 생크림 가득 크림 샌드위치.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.3</span><span class="gastro-budget">💰 ¥1,100~</span></div><a href="https://maps.google.com/?q=Mutsukado+Hakata" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                            <div id="d3b3" class="gastro-pane">
-                                <strong>더 시티 베이커리 (바르 텐진)</strong><br>솔라리아 플라자 지하. 뉴욕 감성 프레첼 크로와상과 모닝 아메리카노, 조개살 가득 클램 차우더 핫 스프 조합.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.3</span><span class="gastro-budget">💰 ¥1,000~</span></div><a href="https://maps.google.com/?q=The+City+Bakery+Tenjin" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                            <div id="d3b4" class="gastro-pane">
-                                <strong>우에시마 커피 나카스점 (모닝 토스트)</strong><br>시원한 구리 잔에 세팅되는 원조 달콤 밀크 흑당커피와 토스트 에그 BLT 샌드위치 콤보 조식 세트.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.3</span><span class="gastro-budget">💰 ¥850~</span></div><a href="https://maps.google.com/?q=Ueshima+Coffee+Nakasu" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="timeline-card" onclick="focusPlace(33.582855, 130.396347, 16)">
-                        <span class="time-badge">10:00 ~ 12:15</span>
-                        <div class="card-title">야쿠인 세련된 로컬 감성 골목 & 독립 소품숍 투어</div>
-                        <div class="card-desc">독립 편집숍, 인테리어 가구점, 프라이빗 감성 베이커리 공방들이 밀집하여 여대생 조카와 중학생 딸의 인생 샷 성지 구축.</div>
-                        <a href="https://maps.google.com/?q=Yakuin+Fukuoka" target="_blank" class="gmap-review-btn" onclick="event.stopPropagation();">구글맵에서 현지리뷰 보기</a>
-                    </div>
-
-                    <div class="timeline-card meal-type">
-                        <span class="time-badge">12:30 ~ 14:00 (마지막 점심)</span>
-                        <div class="card-title">3일차 점심 선택 (실패 절대 없는 프리미엄 고기 요리)</div>
-                        <div class="gastronomy-container">
-                            <div class="gastro-tabs">
-                                <button class="gastro-btn active" onclick="changeGastro(this, 'd3m1', 33.589254, 130.417854)">옵션 A</button>
-                                <button class="gastro-btn" onclick="changeGastro(this, 'd3m2', 33.587254, 130.400254)">옵션 B</button>
-                                <button class="gastro-btn" onclick="changeGastro(this, 'd3m3', 33.586854, 130.398554)">옵션 C</button>
-                                <button class="gastro-btn" onclick="changeGastro(this, 'd3m4', 33.589554, 130.418121)">옵션 D</button>
-                            </div>
-                            <div id="d3m1" class="gastro-pane active">
-                                <strong>카와미야 함바그 하카타역점</strong><br>하카타역 버스터미널 1층 위치. 생소고기 덩어리를 미니 원형 개인 돌판에 원하는 굽기로 직접 구워 먹는 원조 불향 맛집.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.3</span><span class="gastro-budget">💰 인당 ¥2,000~</span></div><a href="https://maps.google.com/?q=Kiwamiya+Hakata" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                            <div id="d3m2" class="gastro-pane">
-                                <strong>돈카츠 아스카 텐진점</strong><br>최고급 프리미엄 돈육 부위를 장인 저온 유탕 공법으로 녹아내리게 튀겨낸 두툼하고 담백한 안심 가츠 정식.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.4</span><span class="gastro-budget">💰 인당 ¥2,200~</span></div><a href="https://maps.google.com/?q=Tonkatsu+Asuka+Tenjin" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                            <div id="d3m3" class="gastro-pane">
-                                <strong>텐진 보바르 안심 스테이크 덮밥</strong><br>미디움 안심살을 밥 위에 산더미처럼 회오리형으로 쌓아 올린 특선 비프 덮밥 정식. 와사비 소스 믹스.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.3</span><span class="gastro-budget">💰 인당 ¥1,800~</span></div><a href="https://maps.google.com/?q=Tenjin+Bovard+Fukuoka" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                            <div id="d3m4" class="gastro-pane">
-                                <strong>하카타 토리쇼 오야코동 (달걀덮밥)</strong><br>직화 닭다리살 구이와 신선 달걀물을 반숙 몽글몽글 형태로 조려내어 출국 전 소화를 아주 편안히 돕는 반상 세트.
-                                <div class="pane-bottom-bar"><div class="gastro-meta-info"><span class="gastro-score">⭐ 평점 4.5</span><span class="gastro-budget">💰 인당 ¥1,600~</span></div><a href="https://maps.google.com/?q=Torisho+Hakata" target="_blank" class="gmap-review-btn">구글맵 열기</a></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="timeline-card" onclick="focusPlace(33.585257, 130.444211, 14)">
-                        <span class="time-badge">14:30 ~ </span>
-                        <div class="card-title">호텔 가방 회수 및 지하철 공항선 출국장 이동</div>
-                        <div class="card-desc">캐리어를 인도받아 바로 코앞 구시디마에역 또는 나카스카와바타역을 통해 공항선 직행 열차 승차. 국제선 게이트 터미널까지 단 10분 도달 완결.</div>
-                        <a href="https://maps.google.com/?q=Fukuoka+Airport" target="_blank" class="gmap-review-btn" onclick="event.stopPropagation();">구글맵에서 현지리뷰 보기</a>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <div class="map-column">
-            <div class="map-layer-control">
-                <div class="layer-title">🗺️ 모드 및 레이어 조절</div>
-                <label class="layer-toggle" style="color: #fcd34d; margin-bottom: 2px;">🛰️ 위성 모드 전환<input type="checkbox" id="sat-mode" onclick="toggleSatellite()"></label>
-                <label class="layer-toggle">🏨 베이스캠프 숙소<input type="checkbox" id="layer-hotel" checked onclick="toggleLayer('hotel')"></label>
-                <label class="layer-toggle">🏞️ 주요 관광 명소<input type="checkbox" id="layer-sight" checked onclick="toggleLayer('sight')"></label>
-                <label class="layer-toggle">🍱 음식 및 조식전체<input type="checkbox" id="layer-food" checked onclick="toggleLayer('food')"></label>
-            </div>
-            <div id="map" class="map-wrapper"></div>
-        </div>
-
+  <!-- DAY 1 -->
+  <div class="day-panel active" id="day0">
+    <div class="day-intro">&#9992;&#65039; 인천 12:30 출발 → 후쿠오카 약 14:00 도착. 체크인 후 저녁부터 탐방 시작!</div>
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--coral)"></div>식사</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--teal)"></div>관광</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--purple)"></div>쇼핑</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--pink)"></div>야간</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--gray)"></div>이동</div>
     </div>
+    <div class="timeline">
+      <div class="spot"><div class="spot-l"><div class="dot dot-transit"></div><div class="time-l">12:30</div></div><div class="sc"><div class="sc-top"><span class="sc-name">인천국제공항 출발</span><span class="badge bt">이동</span></div><div class="sc-desc">인천 → 후쿠오카. 비행 약 1시간 30분.</div></div></div>
+      <div class="spot"><div class="spot-l"><div class="dot dot-transit"></div><div class="time-l">~14:00</div></div><div class="sc" onclick="focusPlace('fukuoka_airport')"><div class="sc-top"><span class="sc-name">후쿠오카 공항 도착</span><span class="badge bt">이동</span></div><div class="sc-desc">입국 후 지하철 공항선 → 나카스카와바타역(약 10분) → 호텔 도보 3분.</div><button class="map-btn" onclick="event.stopPropagation();focusPlace('fukuoka_airport')">&#128205; 지도에서 보기</button></div></div>
+      <div class="spot"><div class="spot-l"><div class="dot dot-transit"></div><div class="time-l">15:00</div></div><div class="sc" onclick="focusPlace('hotel')"><div class="sc-top"><span class="sc-name">하카타 나카스 워싱턴 호텔 체크인</span><span class="badge bt">숙소</span></div><div class="sc-desc">나카가와 강변. 나카스 야타이까지 도보 2분.</div><button class="map-btn" onclick="event.stopPropagation();focusPlace('hotel')">&#128205; 지도에서 보기</button></div></div>
+    </div>
+    <div class="ms">
+      <div class="ms-hdr"><span class="ms-icon">&#127836;</span><span class="ms-title">저녁 — 라멘 or 모츠나베</span><span class="ms-time">18:00</span></div>
+      <div class="fo-list" id="d1-din">
+        <div class="fo sel" data-place="shinshin" onclick="toggleFood(this,'d1-din')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">신신 라멘 (Shin Shin)</div><div class="fo-desc">후쿠오카 최고 돈코츠 라멘 · 덴진점 · 웨이팅 30~60분</div></div><div class="fo-meta"><span class="fo-star">★4.3</span><span class="fo-type">라멘</span></div></div>
+        <div class="fo" data-place="oyama" onclick="toggleFood(this,'d1-din')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">오야마 (Oyama)</div><div class="fo-desc">모츠나베 명소 · 나카스 근처 · 예약 권장</div></div><div class="fo-meta"><span class="fo-star">★4.5</span><span class="fo-type">모츠나베</span></div></div>
+        <div class="fo" data-place="ichifuji" onclick="toggleFood(this,'d1-din')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">모츠나베 이치후지 하카타</div><div class="fo-desc">정통 모츠나베 · 하카타역 근처 · 저녁 5시~</div></div><div class="fo-meta"><span class="fo-star">★4.7</span><span class="fo-type">모츠나베</span></div></div>
+        <div class="fo" data-place="wangyoza" onclick="toggleFood(this,'d1-din')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">완 교자 (Wan Gyoza)</div><div class="fo-desc">나카스 야간 명소 · 교자+쇼유라멘 · 새벽 1시까지</div></div><div class="fo-meta"><span class="fo-star">★4.4</span><span class="fo-type">교자</span></div></div>
+        <div class="fo" data-place="tetsunabe" onclick="toggleFood(this,'d1-din')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">테츠나베 교자</div><div class="fo-desc">철판 위 교자 · 기온마치 · 현금만 · 저녁 5시~</div></div><div class="fo-meta"><span class="fo-star">★3.8</span><span class="fo-type">교자</span></div></div>
+        <div class="fo" data-place="motsumendou" onclick="toggleFood(this,'d1-din')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">하카타 모츠멘도</div><div class="fo-desc">모츠나베→라멘 코스 · 덴진 · 숨은 맛집</div></div><div class="fo-meta"><span class="fo-star">★4.7</span><span class="fo-type">모츠나베</span></div></div>
+      </div>
+      </div>
+    <div class="timeline">
+      <div class="spot"><div class="spot-l"><div class="dot dot-night"></div><div class="time-l">20:30</div></div><div class="sc" onclick="focusPlace('nakasu_yatai')"><div class="sc-top"><span class="sc-name">나카스 야타이 거리</span><span class="badge bn">야간</span></div><div class="sc-desc">강변 포장마차. 호텔 도보 2분! 오뎅·야키라멘·꼬치. 18시~자정.</div><div class="tip">&#128180; 현금만 가능! 맥주 한 잔과 함께 나카가와 야경 감상</div><button class="map-btn" onclick="event.stopPropagation();focusPlace('nakasu_yatai')">&#128205; 지도에서 보기</button></div></div>
+    </div>
+  </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        var map = L.map('map', { zoomControl: false }).setView([33.5892, 130.4084], 14);
+  <!-- DAY 2 -->
+  <div class="day-panel" id="day1">
+    <div class="day-intro">&#127749; 후쿠오카 핵심 관광일! 조식 → 다자이후 텐만구 → 캐널시티·텐진 쇼핑 → 모츠나베 저녁</div>
+    <div class="ms">
+      <div class="ms-hdr"><span class="ms-icon">&#127749;</span><span class="ms-title">조식</span><span class="ms-time">07:30</span></div>
+      <div class="fo-list" id="d2-brk">
+        <div class="fo sel" data-place="itookashi" onclick="toggleFood(this,'d2-brk')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">이토오카시 (Itookashi)</div><div class="fo-desc">정통 구이 아침 정식 · 명란젓 무제한 · 7시 오픈 · 현금</div></div><div class="fo-meta"><span class="fo-star">★4.4</span><span class="fo-type">정식</span></div></div>
+        <div class="fo" data-place="nooice" onclick="toggleFood(this,'d2-brk')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">NOOICE Hakata</div><div class="fo-desc">호주식 브런치 · 크렘 브륄레 팬케이크 · 8시 오픈</div></div><div class="fo-meta"><span class="fo-star">★4.6</span><span class="fo-type">브런치</span></div></div>
+        <div class="fo" data-place="kisuimaru" onclick="toggleFood(this,'d2-brk')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">기스이마루 (喜水丸)</div><div class="fo-desc">하카타역 지하 · 해산물 정식+명란젓 무제한 · 7:30 오픈</div></div><div class="fo-meta"><span class="fo-star">★4.2</span><span class="fo-type">해산물</span></div></div>
+        <div class="fo" data-place="uoden" onclick="toggleFood(this,'d2-brk')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">하카타 해산물 우오덴</div><div class="fo-desc">나카스 강변 · 해산물 정식 · 7시 오픈</div></div><div class="fo-meta"><span class="fo-star">★4.3</span><span class="fo-type">해산물</span></div></div>
+        <div class="fo" data-place="fuglen" onclick="toggleFood(this,'d2-brk')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">FUGLEN FUKUOKA</div><div class="fo-desc">노르웨이 스페셜티 커피 · 하카타역 동쪽 · 7시 오픈</div></div><div class="fo-meta"><span class="fo-star">★4.4</span><span class="fo-type">카페</span></div></div>
+      </div>
+      </div>
+    <div class="timeline">
+      <div class="spot"><div class="spot-l"><div class="dot dot-transit"></div><div class="time-l">09:30</div></div><div class="sc"><div class="sc-top"><span class="sc-name">다자이후 이동</span><span class="badge bt">이동</span></div><div class="sc-desc">니시테쓰 덴진역 → 다자이후역. 특급 약 25분.</div></div></div>
+      <div class="spot"><div class="spot-l"><div class="dot dot-sight"></div><div class="time-l">10:00</div></div><div class="sc" onclick="focusPlace('dazaifu')"><div class="sc-top"><span class="sc-name">다자이후 텐만구 신사</span><span class="badge bs">관광</span></div><div class="sc-desc">학문의 신 텐진. 우메가에모치(매화떡) 필수 체험!</div><div class="tip">&#9888;&#65039; 2026년까지 본전 보수 공사 중 — 임시 사전 운영</div><button class="map-btn" onclick="event.stopPropagation();focusPlace('dazaifu')">&#128205; 지도에서 보기</button></div></div>
+      <div class="spot"><div class="spot-l"><div class="dot dot-transit"></div><div class="time-l">13:00</div></div><div class="sc"><div class="sc-top"><span class="sc-name">후쿠오카 시내 복귀</span><span class="badge bt">이동</span></div><div class="sc-desc">다자이후역 → 니시테쓰 덴진역. 약 25분.</div></div></div>
+    </div>
+    <div class="ms">
+      <div class="ms-hdr"><span class="ms-icon">&#127857;</span><span class="ms-title">점심</span><span class="ms-time">13:30</span></div>
+      <div class="fo-list" id="d2-lun">
+        <div class="fo sel" data-place="gyukatsu_parco" onclick="toggleFood(this,'d2-lun')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">규카츠 모토무라 파르코점</div><div class="fo-desc">덴진 파르코 B2F · 소고기 돈카츠 · 웨이팅 1~2시간</div></div><div class="fo-meta"><span class="fo-star">★4.9</span><span class="fo-type">규카츠</span></div></div>
+        <div class="fo" data-place="kurodahan" onclick="toggleFood(this,'d2-lun')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">Tuna and Rice KURODAHAN</div><div class="fo-desc">참치 덮밥 전문 · 다이묘 · 예약 권장</div></div><div class="fo-meta"><span class="fo-star">★4.9</span><span class="fo-type">해산물</span></div></div>
+        <div class="fo" data-place="kisuimaru" onclick="toggleFood(this,'d2-lun')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">기스이마루 점심</div><div class="fo-desc">하카타역 지하 · 신선 해산물 정식 · 명란젓 무제한</div></div><div class="fo-meta"><span class="fo-star">★4.2</span><span class="fo-type">해산물</span></div></div>
+        <div class="fo" data-place="udon_taira" onclick="toggleFood(this,'d2-lun')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">우동 타이라 (Udon Taira)</div><div class="fo-desc">현지인 맛집 · 부드러운 우동 · 11~15시만 영업</div></div><div class="fo-meta"><span class="fo-star">★4.4</span><span class="fo-type">우동</span></div></div>
+        <div class="fo" data-place="shinshin_kitte" onclick="toggleFood(this,'d2-lun')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">신신 KITTE 하카타점</div><div class="fo-desc">하카타역 KITTE B1 · 본점보다 줄 짧음</div></div><div class="fo-meta"><span class="fo-star">★4.1</span><span class="fo-type">라멘</span></div></div>
+      </div>
+      </div>
+    <div class="timeline">
+      <div class="spot"><div class="spot-l"><div class="dot dot-shop"></div><div class="time-l">15:00</div></div><div class="sc" onclick="focusPlace('canal_city')"><div class="sc-top"><span class="sc-name">캐널시티 하카타</span><span class="badge bsh">쇼핑</span></div><div class="sc-desc">대형 복합몰 · 건담숍 · 지브리숍 · 분수 쇼(매 정각·반시)</div><button class="map-btn" onclick="event.stopPropagation();focusPlace('canal_city')">&#128205; 지도에서 보기</button></div></div>
+      <div class="spot"><div class="spot-l"><div class="dot dot-shop"></div><div class="time-l">17:00</div></div><div class="sc" onclick="focusPlace('tenjin_underground')"><div class="sc-top"><span class="sc-name">텐진 지하상가 · PARCO</span><span class="badge bsh">쇼핑</span></div><div class="sc-desc">일본 패션·드럭스토어. 텐진역 직결. 10~20시.</div><button class="map-btn" onclick="event.stopPropagation();focusPlace('tenjin_underground')">&#128205; 지도에서 보기</button></div></div>
+    </div>
+    <div class="ms">
+      <div class="ms-hdr"><span class="ms-icon">&#127858;</span><span class="ms-title">저녁 — 모츠나베 or 야키토리</span><span class="ms-time">19:00</span></div>
+      <div class="fo-list" id="d2-din">
+        <div class="fo sel" data-place="oyama" onclick="toggleFood(this,'d2-din')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">오야마 (Oyama)</div><div class="fo-desc">모츠나베 명소 · 예약 필수 · 말고기 사시미도 유명</div></div><div class="fo-meta"><span class="fo-star">★4.5</span><span class="fo-type">모츠나베</span></div></div>
+        <div class="fo" data-place="kozu_motsu" onclick="toggleFood(this,'d2-din')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">코우즈키 모츠나베</div><div class="fo-desc">이마이즈미 · 한국어 메뉴 · 한국인 인기</div></div><div class="fo-meta"><span class="fo-star">★4.7</span><span class="fo-type">모츠나베</span></div></div>
+        <div class="fo" data-place="yakitori_torishyou" onclick="toggleFood(this,'d2-din')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">야키토리 토리쇼</div><div class="fo-desc">나카스 · 와규 꼬치 · 영어·한국어 메뉴 · 6시~자정</div></div><div class="fo-meta"><span class="fo-star">★4.4</span><span class="fo-type">야키토리</span></div></div>
+        <div class="fo" data-place="tsuchiya_yakitori" onclick="toggleFood(this,'d2-din')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">쓰치야 야키토리 (나카스)</div><div class="fo-desc">닭 껍질 꼬치 유명 · 한국어 소통 · 새벽 1시까지</div></div><div class="fo-meta"><span class="fo-star">★4.5</span><span class="fo-type">야키토리</span></div></div>
+        <div class="fo" data-place="itookashi" onclick="toggleFood(this,'d2-din')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">이토오카시 저녁</div><div class="fo-desc">저녁 5:30~22시 영업 · 신선한 사시미 · 현금만</div></div><div class="fo-meta"><span class="fo-star">★4.4</span><span class="fo-type">일식</span></div></div>
+      </div>
+      </div>
+    <div class="timeline">
+      <div class="spot"><div class="spot-l"><div class="dot dot-night"></div><div class="time-l">21:00</div></div><div class="sc" onclick="focusPlace('mamichan')"><div class="sc-top"><span class="sc-name">덴진 야타이 마미짱</span><span class="badge bn">야간</span></div><div class="sc-desc">쇼와도리 포장마차 · 야키라멘·오뎅 유명 · 6~11:30pm</div><button class="map-btn" onclick="event.stopPropagation();focusPlace('mamichan')">&#128205; 지도에서 보기</button></div></div>
+    </div>
+  </div>
 
-        var streetLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
+  <!-- DAY 3 -->
+  <div class="day-panel" id="day2">
+    <div class="day-intro">&#9992;&#65039; 마지막 날! 조식 + 오호리 공원 산책 → 쇼핑 → 체크아웃 → 16:25 출발</div>
+    <div class="ms">
+      <div class="ms-hdr"><span class="ms-icon">&#9728;&#65039;</span><span class="ms-title">조식 — 마지막 아침</span><span class="ms-time">07:30</span></div>
+      <div class="fo-list" id="d3-brk">
+        <div class="fo sel" data-place="itookashi" onclick="toggleFood(this,'d3-brk')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">이토오카시 (Itookashi)</div><div class="fo-desc">정통 아침 정식 · 명란젓 무제한 · 7시 오픈 · 현금</div></div><div class="fo-meta"><span class="fo-star">★4.4</span><span class="fo-type">정식</span></div></div>
+        <div class="fo" data-place="fuglen" onclick="toggleFood(this,'d3-brk')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">FUGLEN FUKUOKA</div><div class="fo-desc">노르웨이 스페셜티 커피 · 핸드드립 · 7시 오픈</div></div><div class="fo-meta"><span class="fo-star">★4.4</span><span class="fo-type">카페</span></div></div>
+        <div class="fo" data-place="nooice" onclick="toggleFood(this,'d3-brk')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">NOOICE Hakata</div><div class="fo-desc">호주식 브런치 · 크렘 브륄레 팬케이크 · 8시 오픈</div></div><div class="fo-meta"><span class="fo-star">★4.6</span><span class="fo-type">브런치</span></div></div>
+        <div class="fo" data-place="uoden" onclick="toggleFood(this,'d3-brk')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">하카타 해산물 우오덴</div><div class="fo-desc">나카스 강변 · 해산물 아침 정식 · 6:30 오픈(주말)</div></div><div class="fo-meta"><span class="fo-star">★4.3</span><span class="fo-type">해산물</span></div></div>
+      </div>
+      </div>
+    <div class="timeline">
+      <div class="spot"><div class="spot-l"><div class="dot dot-sight"></div><div class="time-l">09:00</div></div><div class="sc" onclick="focusPlace('ohori_park')"><div class="sc-top"><span class="sc-name">오호리 공원 산책</span><span class="badge bs">관광</span></div><div class="sc-desc">2km 산책로 · 오리배 대여 · 야요이 구사마 호박. 지하철 오호리코엔역.</div><button class="map-btn" onclick="event.stopPropagation();focusPlace('ohori_park')">&#128205; 지도에서 보기</button></div></div>
+      <div class="spot"><div class="spot-l"><div class="dot dot-shop"></div><div class="time-l">10:30</div></div><div class="sc" onclick="focusPlace('canal_city')"><div class="sc-top"><span class="sc-name">마지막 쇼핑 · 기념품</span><span class="badge bsh">쇼핑</span></div><div class="sc-desc">캐널시티·드럭스토어. 명란젓(냉장 밀봉 포장) 기념품 추천!</div><div class="tip">&#128230; 명란젓은 냉장 포장으로 국내 반입 가능</div></div></div>
+      <div class="spot"><div class="spot-l"><div class="dot dot-transit"></div><div class="time-l">11:00</div></div><div class="sc"><div class="sc-top"><span class="sc-name">호텔 체크아웃</span><span class="badge bt">이동 준비</span></div><div class="sc-desc">체크아웃 후 짐 프런트 보관 가능. 점심까지 자유 시간.</div></div></div>
+    </div>
+    <div class="ms">
+      <div class="ms-hdr"><span class="ms-icon">&#127836;</span><span class="ms-title">마지막 점심</span><span class="ms-time">12:00</span></div>
+      <div class="fo-list" id="d3-lun">
+        <div class="fo sel" data-place="shinshin_kitte" onclick="toggleFood(this,'d3-lun')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">신신 KITTE 하카타점</div><div class="fo-desc">하카타역 B1 · 줄 짧음 · 마지막 라멘</div></div><div class="fo-meta"><span class="fo-star">★4.1</span><span class="fo-type">라멘</span></div></div>
+        <div class="fo" data-place="sanmi" onclick="toggleFood(this,'d3-lun')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">산미 하카타역점 (24H)</div><div class="fo-desc">토마토 라멘 원조 · 24시간 운영 · 가성비 최고</div></div><div class="fo-meta"><span class="fo-star">★4.5</span><span class="fo-type">라멘</span></div></div>
+        <div class="fo" data-place="ebisuya" onclick="toggleFood(this,'d3-lun')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">에비스야 우동 하카타</div><div class="fo-desc">칼비 붓카케 우동 · 현금만 · 캐널시티 근처</div></div><div class="fo-meta"><span class="fo-star">★4.4</span><span class="fo-type">우동</span></div></div>
+        <div class="fo" data-place="hagakure" onclick="toggleFood(this,'d3-lun')"><div class="fo-chk">&#10003;</div><div class="fo-info"><div class="fo-name">하가쿠레 우동</div><div class="fo-desc">하카타역 남쪽 · 수제 우동 · 11~15시만 영업</div></div><div class="fo-meta"><span class="fo-star">★4.4</span><span class="fo-type">우동</span></div></div>
+      </div>
+      </div>
+    <div class="timeline">
+      <div class="spot"><div class="spot-l"><div class="dot dot-transit"></div><div class="time-l">14:00</div></div><div class="sc" onclick="focusPlace('fukuoka_airport')"><div class="sc-top"><span class="sc-name">후쿠오카 공항 이동 · 출국</span><span class="badge bt">이동</span></div><div class="sc-desc">지하철 약 10분. 국제선 2.5시간 전 도착 권장.</div><div class="tip">&#9992;&#65039; 국제&#8596;국내 터미널 간 무료 셔틀 5~10분 소요</div><button class="map-btn" onclick="event.stopPropagation();focusPlace('fukuoka_airport')">&#128205; 지도에서 보기</button></div></div>
+      <div class="spot"><div class="spot-l"><div class="dot dot-transit"></div><div class="time-l">16:25</div></div><div class="sc"><div class="sc-top"><span class="sc-name">후쿠오카 출발 &#9992;&#65039;</span><span class="badge bt">귀국</span></div><div class="sc-desc">후쿠오카 → 인천. 즐거운 귀국길!</div></div></div>
+    </div>
+  </div>
 
-        var satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: '© Esri World Imagery'
-        });
+  <div class="sumbar">
+    <span>&#128205; <strong id="markerCount">0</strong>개 표시 중</span>
+    <span>&#9989; <strong id="mealCount">0</strong>개 식당 선택됨</span>
+  </div>
+</div>
+<div class="rp"><div id="map"></div></div>
+</div>
 
-        function toggleSatellite() {
-            var satCheckbox = document.getElementById('sat-mode').checked;
-            if (satCheckbox) {
-                map.removeLayer(streetLayer); satelliteLayer.addTo(map);
-            } else {
-                map.removeLayer(satelliteLayer); streetLayer.addTo(map);
-            }
-        }
+<script>
+const PLACES={
+  hotel:         {lat:33.5924,lng:130.4091,name:'하카타 나카스 워싱턴 호텔',desc:'2박 3일 숙소. 나카스 야타이까지 도보 2분!',color:'#7F77DD',icon:'🏨',group:'stay',  gmap:'https://www.google.com/maps/search/Hakata+Nakasu+Washington+Hotel/@33.5924,130.4091,17z'},
+  fukuoka_airport:{lat:33.5850,lng:130.4491,name:'후쿠오카 국제공항',          desc:'지하철 공항선. 하카타역 5분, 나카스 10분.',     color:'#5f6b7a',icon:'✈️',group:'airport',gmap:'https://www.google.com/maps/search/Fukuoka+Airport/@33.5850,130.4491,17z'},
+  nakasu_yatai:  {lat:33.5904,lng:130.4083,name:'나카스 야타이 거리',          desc:'강변 포장마차. 18:00~자정. 현금만!',           color:'#D4537E',icon:'🏮',group:'night', gmap:'https://www.google.com/maps/search/%E4%B8%AD%E6%B4%B2%E5%B1%8B%E5%8F%B0/@33.5904,130.4083,17z'},
+  canal_city:    {lat:33.5896,lng:130.4109,name:'캐널시티 하카타',             desc:'대형 복합몰. 건담숍·지브리숍·분수 쇼. 10~21시.',color:'#7F77DD',icon:'🏬',group:'shop',  gmap:'https://www.google.com/maps/search/Canal+City+Hakata/@33.5896,130.4109,17z'},
+  tenjin_underground:{lat:33.5887,lng:130.3999,name:'텐진 지하상가',           desc:'패션·잡화·드럭스토어. 텐진역 직결. 10~20시.', color:'#7F77DD',icon:'🛍️',group:'shop',  gmap:'https://www.google.com/maps/search/%E5%A4%A9%E7%A5%9E%E5%9C%B0%E4%B8%8B%E8%A1%97/@33.5887,130.3999,17z'},
+  ohori_park:    {lat:33.5862,lng:130.3765,name:'오호리 공원',                 desc:'2km 산책로·오리배·야요이 구사마 호박.',        color:'#1D9E75',icon:'🌿',group:'sight', gmap:'https://www.google.com/maps/search/%E5%A4%A7%E6%BF%A0%E5%85%AC%E5%9C%92/@33.5862,130.3765,17z'},
+  mamichan:      {lat:33.5921,lng:130.3977,name:'야타이 마미짱',               desc:'덴진 쇼와도리 포장마차. 야키라멘·오뎅. 불쇼!', color:'#D4537E',icon:'🍺',group:'night', gmap:'https://www.google.com/maps/search/%E5%B1%8B%E5%8F%B0%E3%81%BE%E3%81%BF%E3%81%A1%E3%82%83%E3%82%93/@33.5921,130.3977,17z'},
+  shinshin:      {lat:33.5927,lng:130.3968,name:'신신 라멘 (덴진점)',          desc:'후쿠오카 최고 돈코츠 라멘. 웨이팅 30~60분. ★4.3',color:'#D85A30',icon:'🍜',group:'food',gmap:'https://www.google.com/maps/search/%E5%8D%9A%E5%A4%9A%E3%82%89%E3%83%BC%E3%82%81%E3%82%93Shin-Shin+%E5%A4%A9%E7%A5%9E%E6%9C%AC%E5%BA%97/@33.5927,130.3968,17z'},
+  oyama:         {lat:33.5967,lng:130.4097,name:'오야마 모츠나베',             desc:'모츠나베 명소. 예약 필수. ★4.5',              color:'#D85A30',icon:'🍲',group:'food',gmap:'https://www.google.com/maps/search/%E7%89%9B%E3%82%82%E3%81%A4%E9%8D%8B+%E3%81%8A%E3%81%8A%E3%82%84%E3%81%BE+%E5%8D%9A%E5%A4%9A%E5%BA%97/@33.5967,130.4097,17z'},
+  ichifuji:      {lat:33.5903,lng:130.4166,name:'모츠나베 이치후지 하카타',   desc:'정통 모츠나베. 하카타역 근처. 저녁 5시~. ★4.7',color:'#D85A30',icon:'🍲',group:'food',gmap:'https://www.google.com/maps/search/%E3%82%82%E3%81%A4%E9%8D%8B+%E4%B8%80%E8%97%A4+%E5%8D%9A%E5%A4%9A%E9%A7%85%E5%89%8D%E5%BA%97/@33.5903,130.4166,17z'},
+  wangyoza:      {lat:33.5919,lng:130.4073,name:'완 교자 (Wan Gyoza)',         desc:'나카스. 교자+쇼유라멘. 새벽 1시까지. ★4.4',   color:'#D85A30',icon:'🥟',group:'food',gmap:'https://www.google.com/maps/search/Wan+Gyoza+%E4%B8%AD%E6%B4%B2/@33.5919,130.4073,17z'},
+  tetsunabe:     {lat:33.5925,lng:130.4141,name:'테츠나베 교자',               desc:'철판 교자. 기온마치. 현금만. ★3.8',            color:'#D85A30',icon:'🥟',group:'food',gmap:'https://www.google.com/maps/search/%E9%89%84%E3%81%AA%E3%81%B9+%E5%8D%9A%E5%A4%9A%E7%A5%87%E5%9C%92/@33.5925,130.4141,17z'},
+  motsumendou:   {lat:33.5925,lng:130.3960,name:'하카타 모츠멘도',             desc:'모츠나베→라멘 코스. 덴진. 숨은 맛집. ★4.7',   color:'#D85A30',icon:'🍲',group:'food',gmap:'https://www.google.com/maps/search/%E5%8D%9A%E5%A4%9A%E3%82%82%E3%81%A4%E9%BA%BA%E9%81%93/@33.5925,130.3960,17z'},
+  itookashi:     {lat:33.5883,lng:130.4063,name:'이토오카시 (Itookashi)',      desc:'정통 아침 정식+사시미. 현금만. 7시 오픈. ★4.4',color:'#D85A30',icon:'🐟',group:'food',gmap:'https://www.google.com/maps/search/%E7%B3%B8%E3%81%8A%E3%81%8B%E3%81%97+%E6%98%A5%E5%90%89/@33.5883,130.4063,17z'},
+  nooice:        {lat:33.5891,lng:130.4146,name:'NOOICE Hakata',               desc:'호주식 브런치 카페. 크렘 브륄레 팬케이크. ★4.6',color:'#D85A30',icon:'🥞',group:'food',gmap:'https://www.google.com/maps/search/NOOICE+Hakata/@33.5891,130.4146,17z'},
+  kisuimaru:     {lat:33.5905,lng:130.4200,name:'기스이마루 (喜水丸)',          desc:'하카타역 지하. 해산물 정식+명란젓 무제한. ★4.2',color:'#D85A30',icon:'🦐',group:'food',gmap:'https://www.google.com/maps/search/%E5%96%9C%E6%B0%B4%E4%B8%B8+%E5%8D%9A%E5%A4%9A%E4%B8%80%E7%95%AA%E8%A1%97%E5%BA%97/@33.5905,130.4200,17z'},
+  uoden:         {lat:33.5917,lng:130.4051,name:'하카타 해산물 우오덴',        desc:'나카스 강변. 해산물 정식. 7시 오픈. ★4.3',    color:'#D85A30',icon:'🦑',group:'food',gmap:'https://www.google.com/maps/search/%E5%8D%9A%E5%A4%9A%E3%82%B7%E3%83%BC%E3%83%95%E3%83%BC%E3%83%89%E3%81%86%E3%81%8A%E7%94%B0/@33.5917,130.4051,17z'},
+  fuglen:        {lat:33.5901,lng:130.4251,name:'FUGLEN FUKUOKA',              desc:'노르웨이 스페셜티 커피. 하카타역 동쪽. ★4.4',  color:'#D85A30',icon:'☕',group:'food',gmap:'https://www.google.com/maps/search/FUGLEN+FUKUOKA/@33.5901,130.4251,17z'},
+  gyukatsu_parco:{lat:33.5909,lng:130.3981,name:'규카츠 모토무라 파르코점',   desc:'덴진 파르코 B2F. 소고기 돈카츠. ★4.9',        color:'#D85A30',icon:'🥩',group:'food',gmap:'https://www.google.com/maps/search/%E7%89%9B%E3%81%8B%E3%81%A4%E3%82%82%E3%81%A8%E6%9D%91+%E7%A6%8F%E5%B2%A1PARCO%E5%BA%97/@33.5909,130.3981,17z'},
+  kurodahan:     {lat:33.5864,lng:130.3955,name:'Tuna and Rice KURODAHAN',     desc:'참치 덮밥 전문. 다이묘. 예약 권장. ★4.9',     color:'#D85A30',icon:'🐟',group:'food',gmap:'https://www.google.com/maps/search/Tuna+and+Rice+KURODAHAN/@33.5864,130.3955,17z'},
+  udon_taira:    {lat:33.5832,lng:130.4160,name:'우동 타이라',                 desc:'현지인 맛집. 부드러운 수제 우동. 11~15시. ★4.4',color:'#D85A30',icon:'🍜',group:'food',gmap:'https://www.google.com/maps/search/%E3%81%86%E3%81%A9%E3%82%93%E5%B9%B3+%E5%8D%9A%E5%A4%9A/@33.5832,130.4160,17z'},
+  shinshin_kitte:{lat:33.5888,lng:130.4194,name:'신신 KITTE 하카타점',         desc:'하카타역 KITTE B1. 본점보다 줄 짧음. ★4.1',   color:'#D85A30',icon:'🍜',group:'food',gmap:'https://www.google.com/maps/search/%E5%8D%9A%E5%A4%9A%E3%82%89%E3%83%BC%E3%82%81%E3%82%93Shin-Shin+KITTE%E5%8D%9A%E5%A4%9A%E5%BA%97/@33.5888,130.4194,17z'},
+  kozu_motsu:    {lat:33.5865,lng:130.4007,name:'코우즈키 모츠나베',           desc:'이마이즈미. 한국어 메뉴. 한국인 인기. ★4.7',   color:'#D85A30',icon:'🍲',group:'food',gmap:'https://www.google.com/maps/search/%E3%81%93%E3%81%86%E3%81%9A%E3%81%8D%E3%82%82%E3%81%A4%E9%8D%8B+%E4%BB%8A%E6%B3%89/@33.5865,130.4007,17z'},
+  yakitori_torishyou:{lat:33.5939,lng:130.4074,name:'야키토리 토리쇼',         desc:'나카스. 와규 꼬치. 영어·한국어 메뉴. ★4.4',   color:'#D85A30',icon:'🍢',group:'food',gmap:'https://www.google.com/maps/search/%E7%84%BC%E3%81%8D%E9%B3%A5%E3%81%A8%E3%82%8A%E3%81%97%E3%82%87%E3%81%86+%E4%B8%AD%E6%B4%B2/@33.5939,130.4074,17z'},
+  tsuchiya_yakitori:{lat:33.5920,lng:130.4073,name:'쓰치야 야키토리',          desc:'닭 껍질 꼬치 유명. 한국어 소통. ★4.5',        color:'#D85A30',icon:'🍢',group:'food',gmap:'https://www.google.com/maps/search/%E3%81%A4%E3%81%A1%E3%82%84%E7%84%BC%E3%81%8D%E9%B3%A5+%E4%B8%AD%E6%B4%B2/@33.5920,130.4073,17z'},
+  sanmi:         {lat:33.5875,lng:130.4247,name:'산미 (토마토 라멘·24H)',      desc:'토마토 라멘 원조. 24시간 운영. ★4.5',          color:'#D85A30',icon:'🍜',group:'food',gmap:'https://www.google.com/maps/search/Sanmi+East+Hakata+Station/@33.5875,130.4247,17z'},
+  ebisuya:       {lat:33.5881,lng:130.4125,name:'에비스야 우동 하카타',        desc:'칼비 붓카케 우동. 현금만. ★4.4',              color:'#D85A30',icon:'🍜',group:'food',gmap:'https://www.google.com/maps/search/%E3%81%88%E3%81%B3%E3%81%99%E3%82%84%E3%81%86%E3%81%A9%E3%82%93+%E5%8D%9A%E5%A4%9A/@33.5881,130.4125,17z'},
+  hagakure:      {lat:33.5836,lng:130.4246,name:'하가쿠레 우동',               desc:'하카타역 남쪽. 수제 우동. 11~15시. ★4.4',     color:'#D85A30',icon:'🍜',group:'food',gmap:'https://www.google.com/maps/search/%E3%81%AF%E3%81%8C%E3%81%8F%E3%82%8C%E3%81%86%E3%81%A9%E3%82%93+%E5%8D%9A%E5%A4%9A/@33.5836,130.4246,17z'},
+};
 
-        // 육지 대지 실좌표 동기화 완료된 마커 데이터베이스
-        const markerData = [
-            { type: 'hotel', lat: 33.592523, lng: 130.408168, title: '하카타 나카스 워싱턴 호텔 플라자', desc: '4인 가족 베이스캠프 숙소' },
-            { type: 'sight', lat: 33.593006, lng: 130.410505, title: '구시다 신사', desc: '호텔 도보 3분 전통 정취 신사 코스' },
-            { type: 'sight', lat: 33.594754, lng: 130.410769, title: '카와바타 도리 상점가', desc: '지붕 아케이드가 완비된 그늘진 로컬 마켓' },
-            { type: 'sight', lat: 33.592182, lng: 130.402634, title: '아크로스 후쿠오카 스텝 가든', desc: '도심 속 녹색 계단 정원 대지 안착' },
-            { type: 'sight', lat: 33.589688, lng: 130.397042, title: '이와타야 백화점', desc: '텐진 중심가 명품 패션 숍 투어 스폿' },
-            { type: 'sight', lat: 33.589412, lng: 130.398687, title: '텐진 지하상가', desc: '풀 에어컨 쇼핑 메카 지하 구역' },
-            { type: 'sight', lat: 33.589838, lng: 130.420681, title: '하카타역 센트럴 타워 (JR 하카타 시티)', desc: '복합 몰 광장 구조 허브' },
-            { type: 'sight', lat: 33.589438, lng: 130.419954, title: '한큐백화점 하카타점', desc: '명품 손수건 기프트 특화 쇼핑 매장' },
-            { type: 'sight', lat: 33.589718, lng: 130.410712, title: '캐널시티 하카타', desc: '호텔 전용 연결 통로 및 대형 분수쇼 광장' },
-            { type: 'sight', lat: 33.582855, lng: 130.396347, title: '야쿠인 골목 (카페거리)', desc: '아기자기 독립 소품 인스타 인생샷 성지' },
-            { type: 'sight', lat: 33.585257, lng: 130.444211, title: '후쿠오카 공항 국제선 터미널', desc: '나카스에서 지하철로 10분 컷 출국장' },
-            
-            // 1일차 식당
-            { type: 'food', lat: 33.593457, lng: 130.404845, title: '인바쇼 편백찜 (옵션A)', desc: '소고기 야채 찜 전문 요리' },
-            { type: 'food', lat: 33.592654, lng: 130.409321, title: '나카스 미츠야시마 야키니쿠 (옵션B)', desc: '내륙 건물 안 완벽 정착' },
-            { type: 'food', lat: 33.590855, lng: 130.407842, title: '나카스 갓포 이시가와 (옵션C)', desc: '일식 수제 명란 영양 솥밥 코스' },
-            { type: 'food', lat: 33.593889, lng: 130.406082, title: '토리마부시 본점 (옵션D)', desc: '4단계 비법 장인 닭고기 덮밥 정식' },
-            
-            // 2일차 아침 조식
-            { type: 'food', lat: 33.590497, lng: 130.404555, title: '원조 하카타 멘타이쥬 (옵션A)', desc: '최고급 통 명란덮밥 아침 반상 명가' },
-            { type: 'food', lat: 33.590321, lng: 130.402754, title: '빵 스톡 하레노가든 나카스점 (옵션B)', desc: '강변 전경 베이커리 카페' },
-            { type: 'food', lat: 33.594654, lng: 130.406854, title: '코메다 커피 하카타 리바레인점 (옵션C)', desc: '리바레인 몰 빌딩 내부 지점' },
-            { type: 'food', lat: 33.592121, lng: 130.404554, title: '우에시마 커피 나카스점 (옵션D)', desc: '구리잔 정통 흑당 밀크커피 & 모닝 호밀샌드' },
+/* group visibility — all ON */
+const gv={stay:true,airport:true,sight:true,shop:true,night:true,food:true};
 
-            // 2일차 점심
-            { type: 'food', lat: 33.588854, lng: 130.418121, title: '우나기 요리 우나기야 (옵션A)', desc: '정통 참숯 장어 히츠마부시 덮밥' },
-            { type: 'food', lat: 33.589854, lng: 130.420121, title: '하카타 이소라기 (옵션B)', desc: '아뮤플라자 9층 카이센동 반상' },
-            { type: 'food', lat: 33.589554, lng: 130.421554, title: '니혼바시 텐동 가네코야 (옵션C)', desc: '장인 튀김덮밥 텐동' },
-            { type: 'food', lat: 33.589321, lng: 130.419554, title: '한큐 쥬쥬 스키야키 (옵션D)', desc: '한큐백화점 10층 식당가 스키야키' },
+/* food selections — defaults: first item in each meal group */
+const sel={shinshin:true,itookashi:true,gyukatsu_parco:true,oyama:true,shinshin_kitte:true};
 
-            // 2일차 저녁
-            { type: 'food', lat: 33.587845, lng: 130.392554, title: '모츠나베 다이다이 (옵션A)', desc: '미쉐린 맑은 청탕 대창전골' },
-            { type: 'food', lat: 33.592954, lng: 130.407554, title: '토리덴 하카타 본점 (옵션B)', desc: '닭 전골 미즈타키' },
-            { type: 'food', lat: 33.589454, lng: 130.420121, title: '하카타 한큐 아사히 와규 (옵션C)', desc: '백화점 상층 프라이빗 와규 샤부샤부' },
-            { type: 'food', lat: 33.591254, lng: 130.410554, title: '갓포 카야 (옵션D)', desc: '일식 수제 솥밥 코스' },
+let map,markers={},openIW=null;
 
-            // 3일차 아침 브런치
-            { type: 'food', lat: 33.590854, lng: 130.402554, title: '빌즈 후쿠오카 (옵션A)', desc: '수상공원 SHIP\'S GARDEN 1층' },
-            { type: 'food', lat: 33.589854, lng: 130.420854, title: '무츠카도 식빵 카페 (옵션B)', desc: '아뮤플라자 5층 프렌치토스트 브런치 명가' },
-            { type: 'food', lat: 33.589121, lng: 130.399554, title: '더 시티 베이커리 (옵션C)', desc: '솔라리아 플라자 지하 크로와상 & 클램차우더 스프' },
-            { type: 'food', lat: 33.592121, lng: 130.404554, title: '우에시마 커피 나카스점 (옵션D)', desc: '모닝 토스트 샌드 & 아이스 밀크 흑당커피' },
+function makeSVG(icon,color){
+  return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="44" viewBox="0 0 36 44">'+
+    '<path d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 26 18 26S36 31.5 36 18C36 8.06 27.94 0 18 0z" fill="'+color+'" opacity="0.93"/>'+
+    '<text x="18" y="24" text-anchor="middle" dominant-baseline="middle" font-size="15" font-family="serif">'+icon+'</text>'+
+    '</svg>'
+  );
+}
 
-            // 3일차 점심
-            { type: 'food', lat: 33.589254, lng: 130.417854, title: '카와미야 함바그 하카타역점 (옵션A)', desc: '버스터미널 1층 와규 함바그' },
-            { type: 'food', lat: 33.587254, lng: 130.400254, title: '돈카츠 아스카 텐진점 (옵션B)', desc: '저온 공법 프리미엄 안심 가츠' },
-            { type: 'food', lat: 33.586854, lng: 130.398554, title: '텐진 보바르 (옵션C)', desc: '안심 스테이크 덮밥' },
-            { type: 'food', lat: 33.589554, lng: 130.418121, title: '하카타 토리쇼 오야코동 (옵션D)', desc: '부드러운 달걀덮밥 반상' }
-        ];
+function initMap(){
+  map=new google.maps.Map(document.getElementById('map'),{
+    center:{lat:33.5900,lng:130.4128},zoom:14,
+    mapTypeControl:false,streetViewControl:false,fullscreenControl:true,
+    styles:[
+      {featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]},
+      {featureType:'transit',elementType:'labels.icon',stylers:[{visibility:'off'}]}
+    ]
+  });
+  Object.entries(PLACES).forEach(([key,p])=>{
+    const m=new google.maps.Marker({
+      position:{lat:p.lat,lng:p.lng},map:null,title:p.name,
+      icon:{url:makeSVG(p.icon,p.color),scaledSize:new google.maps.Size(34,42),anchor:new google.maps.Point(17,42)}
+    });
+    /* compact infowindow — no extra wrapper padding */
+    const gmapLink=p.gmap?'<a href="'+p.gmap+'" target="_blank" rel="noopener" class="iw-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="white" style="flex-shrink:0;vertical-align:middle"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg> 구글 지도에서 보기</a>':'';
+    const iw=new google.maps.InfoWindow({
+      content:'<div class="iw-wrap"><div class="iw-name">'+p.icon+' '+p.name+'</div><div class="iw-desc">'+p.desc+'</div>'+gmapLink+'</div>',
+      maxWidth:240,
+      pixelOffset:new google.maps.Size(0,-2)
+    });
+    m.addListener('click',()=>{if(openIW)openIW.close();iw.open(map,m);openIW=iw;});
+    markers[key]={m,iw,group:p.group};
+  });
+  refreshMarkers();
+  google.maps.event.addListenerOnce(map,'idle',fitAll);
+  // 지도 빈 공간 클릭 시 열린 팝업 닫기
+  map.addListener('click',()=>{
+    if(openIW){openIW.close();openIW=null;}
+  });
+}
 
-        // 마커 타입별 색상 지정 함수
-        function getMarkerColor(type) {
-            if (type === 'hotel') return 'gold';
-            if (type === 'sight') return 'blue';
-            if (type === 'food') return 'red';
-            return 'green';
-        }
+function isVis(key){
+  const {group}=markers[key];
+  if(!gv[group])return false;
+  return true;
+}
 
-        var layers = { hotel: L.layerGroup(), sight: L.layerGroup(), food: L.layerGroup() };
+function refreshMarkers(){
+  let shown=0,foodSel=0;
+  Object.entries(markers).forEach(([key,{m,group}])=>{
+    const v=isVis(key);
+    m.setMap(v?map:null);
+    if(v)shown++;
+    if(group==='food'&&sel[key])foodSel++;
+  });
+  document.getElementById('markerCount').textContent=shown;
+  document.getElementById('mealCount').textContent=foodSel;
+}
 
-        // 핀 생성 및 바인딩
-        markerData.forEach(function(item) {
-            var icon = L.icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-' + getMarkerColor(item.type) + '.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                iconSize: [20, 32], iconAnchor: [10, 32], popupAnchor: [1, -28], shadowSize: [32, 32]
-            });
+function focusPlace(key){
+  if(!markers[key])return;
+  const {m,iw}=markers[key];
+  m.setMap(map);
+  // 현재 줌이 15 미만이면 15로, 그 이상은 유지
+  if(map.getZoom()<15)map.setZoom(15);
+  map.panTo(m.getPosition());
+  if(openIW)openIW.close();
+  iw.open(map,m);openIW=iw;
+}
 
-            var searchUrl = "https://maps.google.com/?q=" + encodeURIComponent(item.title);
-            var popupContent = '<b style="font-size:0.85rem;">' + item.title + '</b><br>' +
-                               '<span style="font-size:0.75rem;color:#475569;">' + item.desc + '</span><br>' +
-                               '<a href="' + searchUrl + '" target="_blank" class="gmap-review-btn" style="margin-top:8px;">구글맵 앱열기</a>';
+function toggleGroup(group,btn){
+  gv[group]=!gv[group];
+  btn.classList.toggle('on',gv[group]);
+  refreshMarkers();
+  setTimeout(fitAll,50);
+}
 
-            var marker = L.marker([item.lat, item.lng], { icon: icon }).bindPopup(popupContent);
-            layers[item.type].addLayer(marker);
-        });
+function toggleFood(el,gid){
+  const key=el.dataset.place;
+  // 토글: 선택/해제
+  const wasSelected=el.classList.contains('sel');
+  el.classList.toggle('sel');
+  sel[key]=!wasSelected;
+  refreshMarkers();
+  // 클릭한 가게를 지도에서 바로 포커스 (마커 클릭과 동일하게)
+  focusPlace(key);
+}
 
-        Object.keys(layers).forEach(function(k) { layers[k].addTo(map); });
+function fitAll(){
+  const bounds=new google.maps.LatLngBounds();
+  let hasVisible=false;
+  Object.entries(markers).forEach(([key,{m}])=>{
+    if(m.getMap()){bounds.extend(m.getPosition());hasVisible=true;}
+  });
+  if(hasVisible){
+    map.fitBounds(bounds,{top:40,right:40,bottom:40,left:40});
+    // prevent over-zoom on sparse data
+    const listener=google.maps.event.addListenerOnce(map,'idle',()=>{
+      if(map.getZoom()>15)map.setZoom(15);
+    });
+  }
+}
 
-        // 포커스 무브먼트 시스템
-        function focusPlace(lat, lng, zoomLevel = 17) {
-            map.setView([lat, lng], zoomLevel, { animate: true, duration: 0.2 });
-            setTimeout(function() {
-                Object.keys(layers).forEach(function(key) {
-                    layers[key].eachLayer(function(layer) {
-                        if(layer.getLatLng().lat === lat && layer.getLatLng().lng === lng) {
-                            layer.openPopup();
-                        }
-                    });
-                });
-            });
-        }
-
-        function toggleLayer(type) {
-            var checked = document.getElementById('layer-' + type).checked;
-            if (checked) { map.addLayer(layers[type]); } 
-            else { map.removeLayer(layers[type]); }
-        }
-
-        function switchDay(evt, dayId) {
-            document.querySelectorAll('.day-content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            
-            document.getElementById(dayId).classList.add("active");
-            evt.currentTarget.classList.add("active");
-
-            if (dayId === 'day1') focusPlace(33.592523, 130.408168, 15);
-            if (dayId === 'day2') focusPlace(33.589838, 130.420681, 15);
-            if (dayId === 'day3') focusPlace(33.582855, 130.396347, 15);
-        }
-
-        function changeGastro(btn, paneId, lat, lng) {
-            const container = btn.closest('.gastronomy-container');
-            container.querySelectorAll('.gastro-btn').forEach(b => b.classList.remove('active'));
-            container.querySelectorAll('.gastro-pane').forEach(p => p.classList.remove('active'));
-            
-            btn.classList.add("active");
-            document.getElementById(paneId).classList.add("active");
-            
-            if(document.getElementById('layer-food').checked) {
-                focusPlace(lat, lng, 17);
-            }
-        }
-    </script>
+function switchDay(idx){
+  document.querySelectorAll('.day-panel').forEach((el,i)=>el.classList.toggle('active',i===idx));
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',i===idx));
+  setTimeout(fitAll,50);
+}
+window.initMap=initMap;
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBKZ64N6aTmQLaU312nCqXeyrNa-lol2IQ&callback=initMap&language=ko&loading=async"></script>
 </body>
 </html>
